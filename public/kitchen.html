@@ -53,6 +53,21 @@
     background:var(--white); border-radius:14px; padding:16px; margin-bottom:20px;
     display:flex; align-items:center; gap:12px; box-shadow:var(--shadow); font-size:13px; color:var(--ink-soft);
   }
+
+  .sound-banner{
+    background:var(--yolk); color:var(--ink); border-radius:14px; padding:14px 18px; margin-bottom:20px;
+    display:flex; align-items:center; justify-content:space-between; gap:12px; cursor:pointer; font-weight:700;
+    box-shadow:var(--shadow);
+  }
+  .sound-banner span{ font-size:14px; }
+  .sound-banner button{ padding:10px 18px; }
+
+  .ticket.warn{ box-shadow:0 0 0 3px var(--yolk), var(--shadow); }
+  .ticket.urgent{ box-shadow:0 0 0 3px var(--chili), var(--shadow); animation:urgentPulse 1.2s infinite; }
+  @keyframes urgentPulse{ 0%,100%{ box-shadow:0 0 0 3px var(--chili), var(--shadow); } 50%{ box-shadow:0 0 0 3px var(--chili), 0 0 0 8px rgba(194,54,22,0.25); } }
+  .ticket-top .elapsed{ font-size:11px; opacity:.85; margin-top:2px; }
+  .ticket.warn .ticket-top .elapsed{ color:var(--yolk); }
+  .ticket.urgent .ticket-top .elapsed{ color:#ffb3a3; font-weight:900; }
 </style>
 </head>
 <body>
@@ -64,6 +79,10 @@
   </div>
 </div>
 <div class="wrap">
+  <div id="soundBanner" class="sound-banner">
+    <span>🔔 點一下開啟「新訂單」提示音（每次開啟看板後需要點一次）</span>
+    <button class="btn btn-primary" id="enableSoundBtn">開啟提示音</button>
+  </div>
   <div class="head-row">
     <div class="qr-hint" style="flex:1;">📱 顧客請掃店內 QR Code 至 <b>/customer.html</b> 點餐</div>
     <div class="today-total">
@@ -80,6 +99,36 @@
 let orders = [];
 const socket = io();
 
+// ---------------- 提示音 ----------------
+let audioCtx = null;
+let soundEnabled = false;
+
+function setupSound(){
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  soundEnabled = true;
+  document.getElementById('soundBanner').style.display = 'none';
+}
+document.getElementById('enableSoundBtn').onclick = setupSound;
+
+function playChime(){
+  if(!soundEnabled || !audioCtx) return;
+  const now = audioCtx.currentTime;
+  [880, 1175].forEach((freq, i) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, now + i * 0.18);
+    gain.gain.linearRampToValueAtTime(0.35, now + i * 0.18 + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.18 + 0.35);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now + i * 0.18);
+    osc.stop(now + i * 0.18 + 0.4);
+  });
+}
+
+// ---------------- 訂單資料 ----------------
 async function loadOrders(){
   const res = await fetch('/api/orders');
   orders = (await res.json()).filter(o => o.status === 'pending');
@@ -90,6 +139,9 @@ async function loadSummary(){
   const data = await res.json();
   document.getElementById('todayTotal').textContent = '$' + data.total;
 }
+
+const WARN_MIN = 8;   // 超過這個分鐘數，邊框變黃色提醒
+const URGENT_MIN = 15; // 超過這個分鐘數，邊框變紅色閃爍
 
 function renderTickets(){
   const grid = document.getElementById('ticketGrid');
@@ -105,13 +157,21 @@ function renderTickets(){
         <span class="iqty"> x${it.qty}</span>
         ${it.opts && it.opts.length ? `<div class="opts">${it.opts.join('・')}</div>` : ''}
       </div>`).join('');
-    const time = new Date(o.createdAt).toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'});
+    const created = new Date(o.createdAt);
+    const time = created.toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'});
+    const elapsedMin = Math.floor((Date.now() - created.getTime()) / 60000);
+    let stateClass = '';
+    if(elapsedMin >= URGENT_MIN) stateClass = 'urgent';
+    else if(elapsedMin >= WARN_MIN) stateClass = 'warn';
     const ticket = document.createElement('div');
-    ticket.className = 'ticket';
+    ticket.className = 'ticket' + (stateClass ? ' ' + stateClass : '');
     ticket.innerHTML = `
       <div class="ticket-top">
         <div><div class="num">No.${String(o.num).padStart(2,'0')}</div><div class="cust">${o.customerName}</div></div>
-        <span class="time">${time}</span>
+        <div style="text-align:right;">
+          <span class="time">${time}</span>
+          <div class="elapsed">已等 ${elapsedMin} 分鐘</div>
+        </div>
       </div>
       <div class="perforation"></div>
       <div class="ticket-body">
@@ -149,6 +209,7 @@ function showToast(msg){
 socket.on('new_order', (order) => {
   orders.push(order);
   renderTickets();
+  playChime();
   showToast(`新訂單 No.${String(order.num).padStart(2,'0')}・${order.customerName}`);
 });
 socket.on('order_paid', ({ order, summary }) => {
@@ -160,6 +221,9 @@ socket.on('order_cancelled', (order) => {
   orders = orders.filter(o => o.id !== order.id);
   renderTickets();
 });
+
+// 每 30 秒重畫一次，讓「已等 X 分鐘」跟顏色提醒會持續更新
+setInterval(renderTickets, 30000);
 
 loadOrders();
 loadSummary();
