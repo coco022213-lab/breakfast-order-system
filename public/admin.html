@@ -103,6 +103,7 @@
 let PIN = sessionStorage.getItem('admin_pin') || '';
 let MENU = [];
 let editingId = null;
+let copyingId = null;
 
 async function tryLogin(pin){
   const res = await fetch('/api/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pin}) });
@@ -136,8 +137,9 @@ function renderMenu(){
     block.innerHTML = `<h2>${cat}</h2>`;
     MENU.filter(i => i.category === cat).forEach(item => {
       const isEditing = editingId === item.id;
+      const isCopying = copyingId === item.id;
       const row = document.createElement('div');
-      row.className = 'item-row' + (isEditing ? ' editing' : '');
+      row.className = 'item-row' + ((isEditing||isCopying) ? ' editing' : '');
       row.innerHTML = `
         <span class="emoji">${item.emoji||'🍽️'}</span>
         <span class="name">${item.name}</span>
@@ -145,7 +147,7 @@ function renderMenu(){
         <label class="toggle"><input type="checkbox" ${item.active!==false?'checked':''} data-id="${item.id}" data-field="active">上架中</label>
         <div class="row-actions">
           <button class="btn btn-outline ${isEditing?'editing-active':''}" data-edit="${item.id}">${isEditing?'關閉編輯':'編輯'}</button>
-          <button class="btn btn-outline" data-copy="${item.id}">複製</button>
+          <button class="btn btn-outline ${isCopying?'editing-active':''}" data-copy="${item.id}">${isCopying?'關閉複製':'複製'}</button>
           <button class="btn btn-outline" data-delete="${item.id}">刪除</button>
         </div>
       `;
@@ -175,6 +177,32 @@ function renderMenu(){
         `;
         block.appendChild(panel);
       }
+
+      if(isCopying){
+        const panel = document.createElement('div');
+        panel.className = 'edit-panel';
+        panel.innerHTML = `
+          <div class="hint" style="margin-bottom:10px;">複製自「${item.name}」，改好內容後按下方新增，會變成一個全新的品項。</div>
+          <div class="field-row">
+            <div class="field"><label>分類</label><input id="copyCat" value="${item.category}"></div>
+            <div class="field"><label>圖示(emoji)</label><input id="copyEmoji" value="${item.emoji||''}"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>品名</label><input id="copyName" value="${item.name}"></div>
+            <div class="field"><label>基本價格</label><input id="copyPrice" type="number" value="${item.price}"></div>
+          </div>
+          <div class="field">
+            <label>客製化選項</label>
+            <textarea id="copyGroups" rows="4">${groupsToText(item.groups)}</textarea>
+            <div class="hint">格式「名稱:選項1,選項2」。單選是預設；名稱後面加「(可複選)」變成可以自由勾選多個。</div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button class="btn btn-primary" style="flex:1;" id="saveCopyBtn">新增為新品項</button>
+            <button class="btn btn-outline" id="cancelInlineCopyBtn">取消</button>
+          </div>
+        `;
+        block.appendChild(panel);
+      }
     });
     wrap.appendChild(block);
   });
@@ -187,12 +215,17 @@ function renderMenu(){
   });
   wrap.querySelectorAll('[data-edit]').forEach(btn => {
     btn.onclick = () => {
+      copyingId = null;
       editingId = editingId === btn.dataset.edit ? null : btn.dataset.edit;
       renderMenu();
     };
   });
   wrap.querySelectorAll('[data-copy]').forEach(btn => {
-    btn.onclick = () => copyItem(btn.dataset.copy);
+    btn.onclick = () => {
+      editingId = null;
+      copyingId = copyingId === btn.dataset.copy ? null : btn.dataset.copy;
+      renderMenu();
+    };
   });
   wrap.querySelectorAll('[data-delete]').forEach(btn => {
     btn.onclick = async () => {
@@ -200,6 +233,7 @@ function renderMenu(){
       await fetch(`/api/admin/menu/${btn.dataset.delete}`, { method:'DELETE', headers:{'x-admin-pin':PIN} });
       showToast('已刪除');
       if(editingId === btn.dataset.delete) editingId = null;
+      if(copyingId === btn.dataset.delete) copyingId = null;
       loadMenu();
     };
   });
@@ -228,6 +262,32 @@ function renderMenu(){
   const cancelInlineEditBtn = document.getElementById('cancelInlineEditBtn');
   if(cancelInlineEditBtn){
     cancelInlineEditBtn.onclick = () => { editingId = null; renderMenu(); };
+  }
+
+  const saveCopyBtn = document.getElementById('saveCopyBtn');
+  if(saveCopyBtn){
+    saveCopyBtn.onclick = async () => {
+      const category = document.getElementById('copyCat').value.trim();
+      const emoji = document.getElementById('copyEmoji').value.trim() || '🍽️';
+      const name = document.getElementById('copyName').value.trim();
+      const price = Number(document.getElementById('copyPrice').value);
+      const groups = parseGroups(document.getElementById('copyGroups').value);
+      if(!category || !name || !price){
+        showToast('請填寫分類、品名、價格');
+        return;
+      }
+      await fetch('/api/admin/menu', {
+        method:'POST', headers:{'Content-Type':'application/json','x-admin-pin':PIN},
+        body: JSON.stringify({ category, emoji, name, price, groups })
+      });
+      showToast('已新增品項');
+      copyingId = null;
+      loadMenu();
+    };
+  }
+  const cancelInlineCopyBtn = document.getElementById('cancelInlineCopyBtn');
+  if(cancelInlineCopyBtn){
+    cancelInlineCopyBtn.onclick = () => { copyingId = null; renderMenu(); };
   }
 }
 
@@ -266,19 +326,6 @@ function groupsToText(groups){
     }).join(',');
     return `${label}:${opts}`;
   }).join('\n');
-}
-
-function copyItem(id){
-  const item = MENU.find(i => i.id === id);
-  if(!item) return;
-  editingId = null;
-  document.getElementById('newCat').value = item.category;
-  document.getElementById('newEmoji').value = item.emoji || '';
-  document.getElementById('newName').value = item.name + '（複製）';
-  document.getElementById('newPrice').value = item.price;
-  document.getElementById('newGroups').value = groupsToText(item.groups);
-  document.querySelector('.add-box').scrollIntoView({ behavior: 'smooth' });
-  showToast(`已複製「${item.name}」的設定，改一改再新增`);
 }
 
 document.getElementById('addItemBtn').onclick = async () => {
