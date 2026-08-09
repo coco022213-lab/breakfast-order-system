@@ -160,7 +160,7 @@ app.get('/api/admin/stats', requireAdmin, (req, res) => {
 });
 
 app.post('/api/orders', (req, res) => {
-  const { customerName, items } = req.body;
+  const { customerName, items, orderType } = req.body;
   if (!customerName || !items || !items.length) {
     return res.status(400).json({ error: '缺少姓名或餐點' });
   }
@@ -170,6 +170,7 @@ app.post('/api/orders', (req, res) => {
     id: newId(),
     num: db.orderCounter,
     customerName,
+    orderType: orderType === 'takeout' ? 'takeout' : 'dine-in',
     items,
     total,
     status: 'pending',
