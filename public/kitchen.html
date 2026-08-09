@@ -54,6 +54,12 @@
     display:flex; align-items:center; gap:12px; box-shadow:var(--shadow); font-size:14px; color:var(--ink-soft);
   }
 
+  .end-day-btn{
+    background:transparent; color:var(--paper); border:2px solid rgba(255,255,255,0.25);
+    font-size:13px; padding:8px 14px; border-radius:100px; font-weight:700; cursor:pointer; font-family:inherit;
+  }
+  .end-day-btn:hover{ background:rgba(255,255,255,0.1); }
+
   .sound-hint{
     background:rgba(255,255,255,0.1); color:var(--paper); border-radius:100px; padding:6px 14px;
     font-size:12px; font-weight:700; display:flex; align-items:center; gap:6px;
@@ -87,6 +93,7 @@
   <div><h1>👵 出餐看板</h1><div class="sub">依點餐順序排列・完成請按「完成並收款」</div></div>
   <div style="display:flex; align-items:center; gap:8px;">
     <span class="sound-hint off" id="soundHint"><span class="dot"></span>提示音準備中</span>
+    <button class="end-day-btn" id="endDayBtn">🔚 結束今日營業</button>
     <a href="/dashboard.html" style="color:var(--paper); text-decoration:none; font-size:13px; background:rgba(255,255,255,0.12); padding:8px 14px; border-radius:100px;">📊 營業儀表板</a>
     <a href="/admin.html" style="color:var(--paper); text-decoration:none; font-size:13px; background:rgba(255,255,255,0.12); padding:8px 14px; border-radius:100px;">🍳 菜單管理</a>
   </div>
@@ -284,6 +291,16 @@ socket.on('order_cancelled', (order) => {
 
 // 每 30 秒重畫一次，讓「已等 X 分鐘」跟顏色提醒會持續更新
 setInterval(renderTickets, 30000);
+
+document.getElementById('endDayBtn').onclick = async () => {
+  let msg = '確定要結束今日營業嗎？\n\n這只會把叫號重設回 No.01，明天開始的訂單會從 1 重新編號。今天已經完成的訂單、營業額紀錄都不會受影響。';
+  if(orders.length > 0){
+    msg = `⚠️ 目前還有 ${orders.length} 筆訂單尚未完成！\n\n` + msg;
+  }
+  if(!confirm(msg)) return;
+  await fetch('/api/admin/reset-counter', { method:'POST' });
+  showToast('已重設，明天從 No.01 開始');
+};
 
 loadOrders();
 loadSummary();
