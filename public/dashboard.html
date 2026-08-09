@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>營業儀表板・荷香早餐店</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<style>
+  .wrap{ padding:20px 24px 60px; max-width:1000px; margin:0 auto; }
+  .login-wrap{ max-width:340px; margin:80px auto; text-align:center; }
+  .login-wrap input{ width:100%; padding:14px; font-size:22px; text-align:center; letter-spacing:6px;
+    border:2px solid var(--paper-deep); border-radius:12px; margin:16px 0; font-family:inherit; }
+
+  .filter-row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:18px; }
+  .filter-row input[type=date]{ padding:9px 10px; border:2px solid var(--paper-deep); border-radius:8px; font-family:inherit; font-size:13px; }
+  .filter-row .sep{ color:var(--ink-soft); font-size:13px; }
+
+  .stat-cards{ display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:14px; margin-bottom:26px; }
+  .stat-card{ background:var(--white); border-radius:14px; padding:16px; box-shadow:var(--shadow); }
+  .stat-card .label{ font-size:12px; color:var(--ink-soft); font-weight:700; margin-bottom:6px; }
+  .stat-card .value{ font-size:26px; font-weight:900; color:var(--chili); }
+
+  .section-title{ font-size:16px; font-weight:900; margin:0 0 12px; }
+
+  .rank-list{ background:var(--white); border-radius:14px; box-shadow:var(--shadow); overflow:hidden; margin-bottom:26px; }
+  .rank-row{ display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--paper-deep); }
+  .rank-row:last-child{ border-bottom:none; }
+  .rank-row .rank-num{ font-weight:900; color:var(--ink-soft); width:22px; text-align:center; font-size:13px; }
+  .rank-row .rank-name{ flex:1; font-weight:700; font-size:14px; }
+  .rank-row .rank-qty{ font-size:12px; color:var(--ink-soft); }
+  .rank-row .rank-revenue{ font-weight:900; color:var(--chili); font-size:14px; min-width:70px; text-align:right; }
+  .bar-bg{ background:var(--paper); border-radius:100px; height:6px; margin-top:6px; overflow:hidden; }
+  .bar-fill{ background:var(--scallion); height:100%; border-radius:100px; }
+
+  .order-list{ display:flex; flex-direction:column; gap:8px; }
+  .order-row{
+    background:var(--white); border-radius:12px; padding:12px 14px; box-shadow:var(--shadow);
+    display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;
+  }
+  .order-row .left .num{ font-weight:900; font-size:13px; color:var(--ink-soft); }
+  .order-row .left .cust{ font-weight:700; font-size:14px; margin:2px 0; }
+  .order-row .left .items{ font-size:12px; color:var(--ink-soft); }
+  .order-row .right{ text-align:right; }
+  .order-row .right .amount{ font-weight:900; color:var(--chili); font-size:16px; }
+  .order-row .right .time{ font-size:11px; color:var(--ink-soft); }
+
+  .empty-state{ text-align:center; padding:50px 20px; color:var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<div id="loginScreen" class="login-wrap">
+  <h1>🔒 營業儀表板</h1>
+  <p style="color:var(--ink-soft); font-size:13px;">請輸入管理密碼</p>
+  <input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="****">
+  <button class="btn btn-primary" style="width:100%;" id="loginBtn">進入</button>
+  <p id="loginError" style="color:var(--chili); font-size:13px; display:none;">密碼錯誤，請再試一次</p>
+</div>
+
+<div id="dashScreen" style="display:none;">
+  <div class="topbar">
+    <div><h1>📊 營業儀表板</h1><div class="sub">依日期區間查看訂單與銷售排行</div></div>
+  </div>
+  <div class="wrap">
+    <div class="filter-row">
+      <button class="pill" data-preset="today">今天</button>
+      <button class="pill" data-preset="week">本週</button>
+      <button class="pill" data-preset="month">本月</button>
+      <button class="pill" data-preset="all">全部</button>
+      <span class="sep">｜</span>
+      <input type="date" id="startDate">
+      <span class="sep">至</span>
+      <input type="date" id="endDate">
+      <button class="btn btn-primary" id="queryBtn">查詢</button>
+    </div>
+
+    <div class="stat-cards">
+      <div class="stat-card"><div class="label">總營業額</div><div class="value" id="totalRevenue">$0</div></div>
+      <div class="stat-card"><div class="label">訂單數</div><div class="value" id="orderCount">0</div></div>
+      <div class="stat-card"><div class="label">平均客單價</div><div class="value" id="avgOrder">$0</div></div>
+    </div>
+
+    <h2 class="section-title">🏆 商品銷售排行</h2>
+    <div class="rank-list" id="rankList"></div>
+
+    <h2 class="section-title">📋 訂單紀錄</h2>
+    <div class="order-list" id="orderList"></div>
+  </div>
+</div>
+
+<script>
+let PIN = sessionStorage.getItem('admin_pin') || '';
+
+async function tryLogin(pin){
+  const res = await fetch('/api/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pin}) });
+  if(res.ok){
+    PIN = pin;
+    sessionStorage.setItem('admin_pin', pin);
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashScreen').style.display = 'block';
+    setPreset('today');
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+  }
+}
+document.getElementById('loginBtn').onclick = () => tryLogin(document.getElementById('pinInput').value.trim());
+document.getElementById('pinInput').addEventListener('keydown', e => { if(e.key==='Enter') tryLogin(e.target.value.trim()); });
+if(PIN) tryLogin(PIN);
+
+function fmtDate(d){ return d.toISOString().slice(0,10); }
+
+function setPreset(preset){
+  document.querySelectorAll('[data-preset]').forEach(b => b.classList.remove('selected'));
+  const btn = document.querySelector(`[data-preset="${preset}"]`);
+  if(btn) btn.classList.add('selected');
+  const today = new Date();
+  let start, end = fmtDate(today);
+  if(preset === 'today'){
+    start = fmtDate(today);
+  } else if(preset === 'week'){
+    const d = new Date(today);
+    d.setDate(d.getDate() - d.getDay());
+    start = fmtDate(d);
+  } else if(preset === 'month'){
+    const d = new Date(today.getFullYear(), today.getMonth(), 1);
+    start = fmtDate(d);
+  } else {
+    start = '';
+    end = '';
+  }
+  document.getElementById('startDate').value = start;
+  document.getElementById('endDate').value = end;
+  loadStats();
+}
+document.querySelectorAll('[data-preset]').forEach(btn => {
+  btn.onclick = () => setPreset(btn.dataset.preset);
+});
+document.getElementById('queryBtn').onclick = () => {
+  document.querySelectorAll('[data-preset]').forEach(b => b.classList.remove('selected'));
+  loadStats();
+};
+
+async function loadStats(){
+  const start = document.getElementById('startDate').value;
+  const end = document.getElementById('endDate').value;
+  const params = new URLSearchParams();
+  if(start) params.set('start', start);
+  if(end) params.set('end', end);
+  const res = await fetch('/api/admin/stats?' + params.toString(), { headers:{'x-admin-pin':PIN} });
+  if(!res.ok) return;
+  const data = await res.json();
+  renderStats(data);
+}
+
+function renderStats(data){
+  document.getElementById('totalRevenue').textContent = '$' + data.totalRevenue;
+  document.getElementById('orderCount').textContent = data.orderCount;
+  document.getElementById('avgOrder').textContent = '$' + data.avgOrder;
+
+  const rankList = document.getElementById('rankList');
+  if(data.items.length === 0){
+    rankList.innerHTML = '<div class="empty-state">這段期間沒有銷售紀錄</div>';
+  } else {
+    const maxQty = data.items[0].qty;
+    rankList.innerHTML = data.items.map((it, idx) => `
+      <div class="rank-row">
+        <div class="rank-num">${idx+1}</div>
+        <div style="flex:1;">
+          <div style="display:flex; justify-content:space-between;">
+            <span class="rank-name">${it.emoji||''} ${it.name}</span>
+            <span class="rank-qty">共 ${it.qty} 份</span>
+          </div>
+          <div class="bar-bg"><div class="bar-fill" style="width:${(it.qty/maxQty*100).toFixed(0)}%"></div></div>
+        </div>
+        <div class="rank-revenue">$${it.revenue}</div>
+      </div>
+    `).join('');
+  }
+
+  const orderList = document.getElementById('orderList');
+  if(data.orders.length === 0){
+    orderList.innerHTML = '<div class="empty-state">這段期間沒有訂單</div>';
+  } else {
+    orderList.innerHTML = data.orders.map(o => {
+      const time = new Date(o.createdAt).toLocaleString('zh-TW', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'});
+      const itemsText = o.items.map(it => `${it.name}x${it.qty}`).join('、');
+      return `
+        <div class="order-row">
+          <div class="left">
+            <div class="num">No.${String(o.num).padStart(2,'0')} · ${o.customerName}</div>
+            <div class="items">${itemsText}</div>
+          </div>
+          <div class="right">
+            <div class="amount">$${o.total}</div>
+            <div class="time">${time}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+</script>
+</body>
+</html>
