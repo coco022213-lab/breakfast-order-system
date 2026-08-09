@@ -192,6 +192,21 @@ app.post('/api/orders/:id/paid', (req, res) => {
   res.json({ order, summary });
 });
 
+// 復原:按錯「完成並收款」時，把訂單救回未完成狀態，並把金額從當日營業額扣掉
+app.post('/api/orders/:id/undo', (req, res) => {
+  const order = db.orders.find((o) => o.id === req.params.id);
+  if (!order) return res.status(404).json({ error: '找不到訂單' });
+  if (order.status !== 'paid') return res.status(400).json({ error: '這筆訂單目前不是已完成狀態' });
+  const key = order.paidDate || todayKey();
+  db.dailyTotals[key] = Math.max(0, (db.dailyTotals[key] || 0) - order.total);
+  order.status = 'pending';
+  delete order.paidDate;
+  saveData();
+  const summary = { date: key, total: db.dailyTotals[key] };
+  io.emit('order_undone', { order, summary });
+  res.json({ order, summary });
+});
+
 // 訂單有誤,取消(不計入營業額)
 app.post('/api/orders/:id/cancel', (req, res) => {
   const order = db.orders.find((o) => o.id === req.params.id);

@@ -10,21 +10,21 @@
 <style>
   .wrap{ padding:20px 24px 60px; }
   .head-row{ display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
-  .head-row h1{ font-size:22px; margin:0; font-weight:900; }
-  .head-row .sub{ color:var(--ink-soft); font-size:13px; margin-top:2px; }
+  .head-row h1{ font-size:24px; margin:0; font-weight:900; }
+  .head-row .sub{ color:var(--ink-soft); font-size:14px; margin-top:2px; }
   .today-total{
-    background:var(--ink); color:var(--paper); padding:12px 20px; border-radius:14px; text-align:right;
+    background:var(--ink); color:var(--paper); padding:14px 22px; border-radius:14px; text-align:right;
   }
-  .today-total .label{ font-size:11px; opacity:.7; }
-  .today-total .amount{ font-size:22px; font-weight:900; color:var(--yolk); }
+  .today-total .label{ font-size:12px; opacity:.7; }
+  .today-total .amount{ font-size:26px; font-weight:900; color:var(--yolk); }
 
-  .ticket-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:20px; }
+  .ticket-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(310px,1fr)); gap:22px; }
   .ticket{ background:var(--white); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; animation:pop .25s ease; }
   @keyframes pop{ from{opacity:0; transform:scale(.95);} to{opacity:1; transform:scale(1);} }
-  .ticket-top{ background:var(--ink); color:var(--paper); padding:14px 16px; display:flex; justify-content:space-between; align-items:center; }
-  .ticket-top .num{ font-size:22px; font-weight:900; color:var(--yolk); }
-  .ticket-top .cust{ font-size:14px; font-weight:700; }
-  .ticket-top .time{ font-size:11px; opacity:.75; }
+  .ticket-top{ background:var(--ink); color:var(--paper); padding:16px 18px; display:flex; justify-content:space-between; align-items:center; }
+  .ticket-top .num{ font-size:28px; font-weight:900; color:var(--yolk); }
+  .ticket-top .cust{ font-size:18px; font-weight:700; }
+  .ticket-top .time{ font-size:13px; opacity:.75; }
   .perforation{
     height:14px; background-color:var(--ink);
     background-image:
@@ -32,26 +32,26 @@
       radial-gradient(circle 7px at 100% 7px, var(--paper) 99%, transparent 100%),
       repeating-linear-gradient(to right, transparent 0 10px, var(--paper-deep) 10px 12px);
   }
-  .ticket-body{ padding:16px; }
-  .tline{ margin-bottom:12px; }
+  .ticket-body{ padding:18px; }
+  .tline{ margin-bottom:14px; }
   .tline:last-child{ margin-bottom:0; }
-  .tline .iname{ font-weight:900; font-size:16px; }
-  .tline .iqty{ color:var(--ink-soft); font-weight:700; font-size:13px; }
-  .tline .opts{ color:var(--chili); font-weight:700; font-size:13px; margin-top:2px; }
-  .ticket-total{ border-top:2px dashed var(--paper-deep); margin-top:14px; padding-top:12px; display:flex; justify-content:space-between; align-items:center; }
-  .ticket-total .label{ font-size:12px; color:var(--ink-soft); font-weight:700; }
-  .ticket-total .amount{ font-size:22px; font-weight:900; color:var(--chili); }
-  .ticket-actions{ display:flex; gap:8px; margin-top:14px; }
+  .tline .iname{ font-weight:900; font-size:20px; }
+  .tline .iqty{ color:var(--ink-soft); font-weight:700; font-size:16px; }
+  .tline .opts{ color:var(--chili); font-weight:700; font-size:16px; margin-top:2px; }
+  .ticket-total{ border-top:2px dashed var(--paper-deep); margin-top:16px; padding-top:14px; display:flex; justify-content:space-between; align-items:center; }
+  .ticket-total .label{ font-size:14px; color:var(--ink-soft); font-weight:700; }
+  .ticket-total .amount{ font-size:28px; font-weight:900; color:var(--chili); }
+  .ticket-actions{ display:flex; gap:8px; margin-top:16px; }
   .ticket-actions button{ flex:1; }
-  .done-btn{ width:100%; }
-  .cancel-btn{ background:transparent; color:var(--ink-soft); border:2px solid var(--paper-deep); flex:none !important; width:44px; padding:14px 0; }
+  .done-btn{ width:100%; font-size:17px; padding:16px; }
+  .cancel-btn{ background:transparent; color:var(--ink-soft); border:2px solid var(--paper-deep); flex:none !important; width:48px; padding:16px 0; font-size:16px; }
 
   .kitchen-empty{ text-align:center; padding:80px 20px; color:var(--ink-soft); }
   .kitchen-empty .big{ font-size:48px; margin-bottom:10px; }
 
   .qr-hint{
     background:var(--white); border-radius:14px; padding:16px; margin-bottom:20px;
-    display:flex; align-items:center; gap:12px; box-shadow:var(--shadow); font-size:13px; color:var(--ink-soft);
+    display:flex; align-items:center; gap:12px; box-shadow:var(--shadow); font-size:14px; color:var(--ink-soft);
   }
 
   .sound-banner{
@@ -59,15 +59,28 @@
     display:flex; align-items:center; justify-content:space-between; gap:12px; cursor:pointer; font-weight:700;
     box-shadow:var(--shadow);
   }
-  .sound-banner span{ font-size:14px; }
+  .sound-banner span{ font-size:15px; }
   .sound-banner button{ padding:10px 18px; }
 
   .ticket.warn{ box-shadow:0 0 0 3px var(--yolk), var(--shadow); }
   .ticket.urgent{ box-shadow:0 0 0 3px var(--chili), var(--shadow); animation:urgentPulse 1.2s infinite; }
   @keyframes urgentPulse{ 0%,100%{ box-shadow:0 0 0 3px var(--chili), var(--shadow); } 50%{ box-shadow:0 0 0 3px var(--chili), 0 0 0 8px rgba(194,54,22,0.25); } }
-  .ticket-top .elapsed{ font-size:11px; opacity:.85; margin-top:2px; }
+  .ticket-top .elapsed{ font-size:12px; opacity:.85; margin-top:2px; }
   .ticket.warn .ticket-top .elapsed{ color:var(--yolk); }
   .ticket.urgent .ticket-top .elapsed{ color:#ffb3a3; font-weight:900; }
+
+  .recent-box{
+    background:var(--white); border-radius:14px; padding:14px 18px; margin-bottom:20px; box-shadow:var(--shadow);
+  }
+  .recent-box h2{ font-size:14px; font-weight:900; margin:0 0 10px; color:var(--ink-soft); }
+  .recent-list{ display:flex; gap:10px; overflow-x:auto; padding-bottom:2px; }
+  .recent-item{
+    background:var(--paper); border-radius:10px; padding:10px 14px; display:flex; align-items:center; gap:10px;
+    white-space:nowrap; flex:none;
+  }
+  .recent-item .rtext{ font-size:13px; font-weight:700; }
+  .recent-item .rtext .rnum{ color:var(--scallion-deep); }
+  .recent-item button{ padding:7px 12px; font-size:12px; border-radius:8px; }
 </style>
 </head>
 <body>
@@ -90,6 +103,10 @@
       <div class="amount" id="todayTotal">$0</div>
     </div>
   </div>
+  <div class="recent-box" id="recentBox" style="display:none;">
+    <h2>🕐 最近完成（按錯可以復原）</h2>
+    <div class="recent-list" id="recentList"></div>
+  </div>
   <div class="ticket-grid" id="ticketGrid"></div>
 </div>
 <div class="toast" id="toast"></div>
@@ -97,6 +114,8 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
 let orders = [];
+let recentlyCompleted = []; // 最近完成的訂單，供「復原」使用
+const RECENT_LIMIT = 8;
 const socket = io();
 
 // ---------------- 提示音 ----------------
@@ -206,6 +225,27 @@ function showToast(msg){
   window.__toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
 }
 
+function renderRecent(){
+  const box = document.getElementById('recentBox');
+  const list = document.getElementById('recentList');
+  if(recentlyCompleted.length === 0){
+    box.style.display = 'none';
+    return;
+  }
+  box.style.display = 'block';
+  list.innerHTML = recentlyCompleted.map(o => `
+    <div class="recent-item">
+      <span class="rtext"><span class="rnum">No.${String(o.num).padStart(2,'0')}</span> ${o.customerName}・$${o.total}</span>
+      <button class="btn btn-outline" data-undo="${o.id}">復原</button>
+    </div>
+  `).join('');
+  list.querySelectorAll('[data-undo]').forEach(btn => {
+    btn.onclick = async () => {
+      await fetch(`/api/orders/${btn.dataset.undo}/undo`, { method:'POST' });
+    };
+  });
+}
+
 socket.on('new_order', (order) => {
   orders.push(order);
   renderTickets();
@@ -216,6 +256,17 @@ socket.on('order_paid', ({ order, summary }) => {
   orders = orders.filter(o => o.id !== order.id);
   renderTickets();
   document.getElementById('todayTotal').textContent = '$' + summary.total;
+  recentlyCompleted.unshift(order);
+  recentlyCompleted = recentlyCompleted.slice(0, RECENT_LIMIT);
+  renderRecent();
+});
+socket.on('order_undone', ({ order, summary }) => {
+  recentlyCompleted = recentlyCompleted.filter(o => o.id !== order.id);
+  renderRecent();
+  orders.push(order);
+  renderTickets();
+  document.getElementById('todayTotal').textContent = '$' + summary.total;
+  showToast(`已復原 No.${String(order.num).padStart(2,'0')}`);
 });
 socket.on('order_cancelled', (order) => {
   orders = orders.filter(o => o.id !== order.id);
