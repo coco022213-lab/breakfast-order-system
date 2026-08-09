@@ -1,0 +1,68 @@
+:root{
+  --paper:#FBF2DC;
+  --paper-deep:#F4E6C1;
+  --ink:#4A2E1E;
+  --ink-soft:#8A6C55;
+  --scallion:#4F6F3F;
+  --scallion-deep:#3A5230;
+  --chili:#C23616;
+  --chili-deep:#9E2A0F;
+  --yolk:#F0A500;
+  --yolk-deep:#D18E00;
+  --steel:#E9E4D4;
+  --white:#FFFDF7;
+  --shadow: 0 4px 14px rgba(74,46,30,0.12);
+  --radius: 14px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Noto Sans TC', sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  min-height:100vh;
+}
+button{ font-family:inherit; }
+
+.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 20px; background:var(--ink); color:var(--paper); flex-wrap:wrap; gap:10px;
+}
+.topbar h1{ font-size:17px; margin:0; font-weight:900; letter-spacing:.5px; }
+.topbar .sub{ font-size:12px; opacity:.75; margin-top:2px; }
+
+.pill{
+  border:2px solid var(--paper-deep); background:var(--paper);
+  padding:9px 16px; border-radius:100px; font-size:13px; font-weight:700;
+  cursor:pointer; color:var(--ink); transition:.15s;
+}
+.pill.selected{ background:var(--scallion); border-color:var(--scallion); color:var(--white); }
+.pill.selected.chili-pill{ background:var(--chili); border-color:var(--chili); }
+
+.btn{
+  border:none; border-radius:12px; font-weight:900; cursor:pointer; transition:.15s;
+  padding:14px 18px; font-size:15px;
+}
+.btn-primary{ background:var(--yolk); color:var(--ink); }
+.btn-primary:hover{ background:var(--yolk-deep); }
+.btn-primary:disabled{ background:var(--steel); color:var(--ink-soft); cursor:not-allowed; }
+.btn-green{ background:var(--scallion); color:var(--white); }
+.btn-green:hover{ background:var(--scallion-deep); }
+.btn-outline{ background:transparent; border:2px solid var(--paper-deep); color:var(--ink); }
+
+.toast{
+  position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--ink); color:var(--paper); padding:14px 24px; border-radius:100px;
+  font-weight:700; font-size:14px; opacity:0; transition:.25s; pointer-events:none; z-index:80;
+}
+.toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+.overlay{
+  position:fixed; inset:0; background:rgba(74,46,30,0.45);
+  display:none; align-items:center; justify-content:center; z-index:50; padding:16px;
+}
+.overlay.active{ display:flex; }
+.modal{
+  background:var(--white); border-radius:20px; width:100%; max-width:420px;
+  max-height:88vh; overflow-y:auto; padding:24px;
+}
