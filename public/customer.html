@@ -10,13 +10,15 @@
 <style>
   .name-bar{
     background:var(--white); padding:14px 16px; box-shadow:var(--shadow);
-    display:flex; gap:10px; align-items:center; position:sticky; top:0; z-index:10;
+    display:flex; flex-direction:column; gap:10px; position:sticky; top:0; z-index:10;
   }
   .name-bar input{
-    flex:1; border:2px solid var(--paper-deep); border-radius:10px; padding:10px 12px;
+    width:100%; border:2px solid var(--paper-deep); border-radius:10px; padding:10px 12px;
     font-size:15px; font-family:inherit;
   }
   .name-bar input:focus{ outline:none; border-color:var(--yolk); }
+  .type-row{ display:flex; gap:8px; }
+  .type-row .pill{ flex:1; text-align:center; }
 
   .cat-tabs{
     display:flex; gap:8px; padding:14px 16px; overflow-x:auto;
@@ -78,6 +80,10 @@
 </div>
 
 <div class="name-bar">
+  <div class="type-row">
+    <button class="pill selected" id="typeDineIn" data-type="dine-in">🍽️ 內用</button>
+    <button class="pill" id="typeTakeout" data-type="takeout">🥡 外帶自取</button>
+  </div>
   <input id="customerName" type="text" placeholder="請輸入姓名或桌號，方便叫號取餐" maxlength="12">
 </div>
 
@@ -102,6 +108,16 @@ let categories = [];
 let activeCat = '';
 let cart = [];
 let currentItem = null, currentSelections = {}, currentQty = 1;
+let orderType = 'dine-in';
+
+document.getElementById('typeDineIn').onclick = () => setOrderType('dine-in');
+document.getElementById('typeTakeout').onclick = () => setOrderType('takeout');
+function setOrderType(type){
+  orderType = type;
+  document.getElementById('typeDineIn').classList.toggle('selected', type === 'dine-in');
+  document.getElementById('typeTakeout').classList.toggle('selected', type === 'takeout');
+  document.getElementById('customerName').placeholder = type === 'dine-in' ? '請輸入桌號或姓名' : '請輸入姓名，方便叫號取餐';
+}
 
 async function loadMenu(){
   const res = await fetch('/api/menu');
@@ -261,7 +277,7 @@ async function submitOrder(){
   }
   const res = await fetch('/api/orders', {
     method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ customerName: name, items: cart })
+    body: JSON.stringify({ customerName: name, items: cart, orderType })
   });
   if(!res.ok){ showToast('送出失敗，請再試一次'); return; }
   const order = await res.json();
@@ -274,7 +290,7 @@ async function submitOrder(){
       <h3 style="margin:14px 0 6px;">訂單已送出！</h3>
       <p style="color:var(--ink-soft); font-size:14px;">您的取餐號碼</p>
       <div style="font-size:40px; font-weight:900; color:var(--chili); margin:6px 0 16px;">No. ${String(order.num).padStart(2,'0')}</div>
-      <p style="color:var(--ink-soft); font-size:13px;">請至櫃檯以「${order.customerName}」取餐並付款・應付 $${order.total}</p>
+      <p style="color:var(--ink-soft); font-size:13px;">${order.orderType === 'takeout' ? '🥡 外帶自取' : '🍽️ 內用'}・請至櫃檯以「${order.customerName}」取餐並付款・應付 $${order.total}</p>
       <button class="btn btn-primary" style="width:100%;margin-top:16px;" id="okBtn">好的</button>
     </div>
   `;
