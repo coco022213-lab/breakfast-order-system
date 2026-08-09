@@ -221,6 +221,18 @@ app.post('/api/orders/:id/cancel', (req, res) => {
   res.json(order);
 });
 
+// 從紀錄中永久刪除一筆訂單（如果是已收款的訂單，會一併從當日營業額扣掉）
+app.delete('/api/admin/orders/:id', requireAdmin, (req, res) => {
+  const order = db.orders.find((o) => o.id === req.params.id);
+  if (!order) return res.status(404).json({ error: '找不到訂單' });
+  if (order.status === 'paid' && order.paidDate) {
+    db.dailyTotals[order.paidDate] = Math.max(0, (db.dailyTotals[order.paidDate] || 0) - order.total);
+  }
+  db.orders = db.orders.filter((o) => o.id !== req.params.id);
+  saveData();
+  res.json({ ok: true });
+});
+
 // 結束今日營業：把叫號重設回 0，明天第一筆訂單會是 No.01（不影響任何歷史訂單資料或營業額統計）
 app.post('/api/admin/reset-counter', (req, res) => {
   db.orderCounter = 0;
