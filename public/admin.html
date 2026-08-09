@@ -128,7 +128,10 @@ function renderMenu(){
         <span class="name">${item.name}</span>
         <span>$</span><input type="number" value="${item.price}" data-id="${item.id}" data-field="price">
         <label class="toggle"><input type="checkbox" ${item.active!==false?'checked':''} data-id="${item.id}" data-field="active">上架中</label>
-        <div class="row-actions"><button class="btn btn-outline" data-delete="${item.id}">刪除</button></div>
+        <div class="row-actions">
+          <button class="btn btn-outline" data-copy="${item.id}">複製</button>
+          <button class="btn btn-outline" data-delete="${item.id}">刪除</button>
+        </div>
       `;
       block.appendChild(row);
     });
@@ -140,6 +143,9 @@ function renderMenu(){
   });
   wrap.querySelectorAll('input[data-field="active"]').forEach(inp => {
     inp.addEventListener('change', () => updateItem(inp.dataset.id, { active: inp.checked }));
+  });
+  wrap.querySelectorAll('[data-copy]').forEach(btn => {
+    btn.onclick = () => copyItem(btn.dataset.copy);
   });
   wrap.querySelectorAll('[data-delete]').forEach(btn => {
     btn.onclick = async () => {
@@ -169,6 +175,28 @@ function parseGroups(text){
     });
     return { key: 'g'+idx, label: (label||'選項').trim(), type: 'single', default: options[0]?.v, options };
   });
+}
+
+function groupsToText(groups){
+  return (groups||[]).map(g => {
+    const opts = (g.options||[]).map(o => {
+      if(/\+\d+$/.test(o.v)) return o.v;
+      return o.extra ? `${o.v}+${o.extra}` : o.v;
+    }).join(',');
+    return `${g.label}:${opts}`;
+  }).join('\n');
+}
+
+function copyItem(id){
+  const item = MENU.find(i => i.id === id);
+  if(!item) return;
+  document.getElementById('newCat').value = item.category;
+  document.getElementById('newEmoji').value = item.emoji || '';
+  document.getElementById('newName').value = item.name + '（複製）';
+  document.getElementById('newPrice').value = item.price;
+  document.getElementById('newGroups').value = groupsToText(item.groups);
+  document.querySelector('.add-box').scrollIntoView({ behavior: 'smooth' });
+  showToast(`已複製「${item.name}」的設定，改一改再新增`);
 }
 
 document.getElementById('addItemBtn').onclick = async () => {
