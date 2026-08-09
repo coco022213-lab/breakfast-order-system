@@ -26,10 +26,9 @@
   .item-list{ padding:0 16px 140px; display:flex; flex-direction:column; gap:12px; }
   .item-card{
     background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow);
-    padding:14px; display:flex; align-items:center; gap:12px; cursor:pointer; border:2px solid transparent;
+    padding:14px 16px; display:flex; align-items:center; gap:12px; cursor:pointer; border:2px solid transparent;
   }
   .item-card:active{ border-color:var(--yolk); }
-  .item-card .emoji{ font-size:32px; }
   .item-card .info{ flex:1; }
   .item-card .name{ font-weight:700; font-size:15px; }
   .item-card .price{ color:var(--chili); font-weight:900; font-size:14px; margin-top:2px; }
@@ -43,9 +42,8 @@
   .cart-bar .amount{ font-size:20px; font-weight:900; color:var(--yolk); }
   .cart-bar button{ background:var(--yolk); color:var(--ink); }
 
-  .modal-head{ display:flex; justify-content:space-between; align-items:flex-start; }
-  .modal-head .emoji{ font-size:40px; }
-  .modal h3{ font-size:20px; margin:8px 0 2px; font-weight:900; }
+  .modal-head{ display:flex; justify-content:flex-end; align-items:flex-start; }
+  .modal h3{ font-size:20px; margin:4px 0 2px; font-weight:900; }
   .modal .base-price{ color:var(--chili); font-weight:900; font-size:15px; margin-bottom:16px; }
   .close-x{ background:var(--paper); border:none; width:30px; height:30px; border-radius:100px; font-size:16px; cursor:pointer; color:var(--ink-soft); }
   .opt-group{ margin-bottom:16px; }
@@ -118,9 +116,10 @@ function renderCatTabs(){
   const wrap = document.getElementById('catTabs');
   wrap.innerHTML = '';
   categories.forEach(c => {
+    const catEmoji = (MENU.find(i => i.category === c) || {}).emoji || '🍽️';
     const b = document.createElement('button');
     b.className = 'pill' + (c === activeCat ? ' selected' : '');
-    b.textContent = c;
+    b.textContent = `${catEmoji} ${c}`;
     b.onclick = () => { activeCat = c; renderCatTabs(); renderItemList(); };
     wrap.appendChild(b);
   });
@@ -137,8 +136,7 @@ function renderItemList(){
   items.forEach(item => {
     const el = document.createElement('div');
     el.className = 'item-card';
-    el.innerHTML = `<span class="emoji">${item.emoji||'🍽️'}</span>
-      <div class="info"><div class="name">${item.name}</div><div class="price">$${item.price}</div></div>`;
+    el.innerHTML = `<div class="info"><div class="name">${item.name}</div><div class="price">$${item.price}</div></div>`;
     el.onclick = () => openModal(item);
     wrap.appendChild(el);
   });
@@ -184,7 +182,7 @@ function renderModal(){
     groupsHtml += `<div class="opt-group"><span class="glabel">${g.label}</span><div class="pill-row">${pills}</div></div>`;
   });
   document.getElementById('modalBody').innerHTML = `
-    <div class="modal-head"><div class="emoji">${currentItem.emoji||'🍽️'}</div><button class="close-x" id="modalClose">✕</button></div>
+    <div class="modal-head"><button class="close-x" id="modalClose">✕</button></div>
     <h3>${currentItem.name}</h3>
     <div class="base-price">$${unitPrice}</div>
     ${groupsHtml}
@@ -234,7 +232,7 @@ function renderCartModal(){
   let linesHtml = cart.length===0 ? '<div class="empty-state">尚未選購任何餐點</div>' : cart.map((c,idx)=>`
     <div class="cart-line">
       <button class="remove" data-idx="${idx}">✕</button>
-      <div class="row1"><span class="iname">${c.emoji||''} ${c.name} x${c.qty}</span><span class="iprice">$${c.unitPrice*c.qty}</span></div>
+      <div class="row1"><span class="iname">${c.name} x${c.qty}</span><span class="iprice">$${c.unitPrice*c.qty}</span></div>
       ${c.opts.length?`<div class="opts">${c.opts.join('・')}</div>`:''}
     </div>`).join('');
   document.getElementById('cartModalBody').innerHTML = `
