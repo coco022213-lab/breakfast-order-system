@@ -18,6 +18,7 @@
     background:var(--white); border-radius:12px; padding:12px 14px; margin-bottom:8px;
     display:flex; align-items:center; gap:10px; box-shadow:var(--shadow); flex-wrap:wrap;
   }
+  .item-row.editing{ border-radius:12px 12px 0 0; margin-bottom:0; }
   .item-row .emoji{ font-size:22px; }
   .item-row .name{ font-weight:700; font-size:14px; flex:1; min-width:80px; }
   .item-row input[type=number]{
@@ -29,8 +30,16 @@
   .toggle input{ width:16px; height:16px; }
   .row-actions{ display:flex; gap:6px; }
   .row-actions button{ padding:8px 12px; font-size:12px; border-radius:8px; }
+  .row-actions button.editing-active{ background:var(--scallion); border-color:var(--scallion); color:var(--white); }
   .save-note{ font-size:11px; color:var(--scallion); font-weight:700; opacity:0; transition:.3s; }
   .save-note.show{ opacity:1; }
+
+  .edit-panel{
+    background:var(--white); border-radius:0 0 12px 12px; padding:16px;
+    box-shadow:var(--shadow); margin-bottom:8px; border-top:2px dashed var(--paper-deep);
+    animation:expand .18s ease;
+  }
+  @keyframes expand{ from{ opacity:0; transform:translateY(-6px);} to{ opacity:1; transform:translateY(0);} }
 
   .add-box{
     background:var(--white); border-radius:14px; padding:18px; box-shadow:var(--shadow); margin-top:30px;
@@ -69,7 +78,7 @@
 
   <div class="wrap">
     <div class="add-box">
-      <h2 id="addBoxTitle">＋ 新增品項</h2>
+      <h2>＋ 新增品項</h2>
       <div class="field-row">
         <div class="field"><label>分類</label><input id="newCat" placeholder="例：蛋餅"></div>
         <div class="field"><label>圖示(emoji)</label><input id="newEmoji" placeholder="🥚"></div>
@@ -83,10 +92,7 @@
         <textarea id="newGroups" rows="4" placeholder="辣度:不辣,小辣,大辣&#10;加料(可複選):起司+10,培根+15"></textarea>
         <div class="hint">每行一組，格式「名稱:選項1,選項2:選項3+加價」。<br>預設是「單選」(客人一定要選一個，像辣度、甜度)；如果是可以自由加、不加、甚至同時加好幾樣的(像加料)，在名稱後面加「(可複選)」，例如「加料(可複選):起司+10,培根+15」。</div>
       </div>
-      <div style="display:flex; gap:10px;">
-        <button class="btn btn-primary" style="flex:1;" id="addItemBtn">新增品項</button>
-        <button class="btn btn-outline" id="cancelEditBtn" style="display:none;">取消編輯</button>
-      </div>
+      <button class="btn btn-primary" style="width:100%;" id="addItemBtn">新增品項</button>
     </div>
   </div>
 </div>
@@ -96,6 +102,7 @@
 <script>
 let PIN = sessionStorage.getItem('admin_pin') || '';
 let MENU = [];
+let editingId = null;
 
 async function tryLogin(pin){
   const res = await fetch('/api/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pin}) });
@@ -128,20 +135,46 @@ function renderMenu(){
     block.className = 'cat-block';
     block.innerHTML = `<h2>${cat}</h2>`;
     MENU.filter(i => i.category === cat).forEach(item => {
+      const isEditing = editingId === item.id;
       const row = document.createElement('div');
-      row.className = 'item-row';
+      row.className = 'item-row' + (isEditing ? ' editing' : '');
       row.innerHTML = `
         <span class="emoji">${item.emoji||'🍽️'}</span>
         <span class="name">${item.name}</span>
         <span>$</span><input type="number" value="${item.price}" data-id="${item.id}" data-field="price">
         <label class="toggle"><input type="checkbox" ${item.active!==false?'checked':''} data-id="${item.id}" data-field="active">上架中</label>
         <div class="row-actions">
-          <button class="btn btn-outline" data-edit="${item.id}">編輯</button>
+          <button class="btn btn-outline ${isEditing?'editing-active':''}" data-edit="${item.id}">${isEditing?'關閉編輯':'編輯'}</button>
           <button class="btn btn-outline" data-copy="${item.id}">複製</button>
           <button class="btn btn-outline" data-delete="${item.id}">刪除</button>
         </div>
       `;
       block.appendChild(row);
+
+      if(isEditing){
+        const panel = document.createElement('div');
+        panel.className = 'edit-panel';
+        panel.innerHTML = `
+          <div class="field-row">
+            <div class="field"><label>分類</label><input id="editCat" value="${item.category}"></div>
+            <div class="field"><label>圖示(emoji)</label><input id="editEmoji" value="${item.emoji||''}"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>品名</label><input id="editName" value="${item.name}"></div>
+            <div class="field"><label>基本價格</label><input id="editPrice" type="number" value="${item.price}"></div>
+          </div>
+          <div class="field">
+            <label>客製化選項</label>
+            <textarea id="editGroups" rows="4">${groupsToText(item.groups)}</textarea>
+            <div class="hint">格式「名稱:選項1,選項2」。單選是預設；名稱後面加「(可複選)」變成可以自由勾選多個。</div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button class="btn btn-primary" style="flex:1;" id="saveEditBtn">儲存修改</button>
+            <button class="btn btn-outline" id="cancelInlineEditBtn">取消</button>
+          </div>
+        `;
+        block.appendChild(panel);
+      }
     });
     wrap.appendChild(block);
   });
@@ -153,7 +186,10 @@ function renderMenu(){
     inp.addEventListener('change', () => updateItem(inp.dataset.id, { active: inp.checked }));
   });
   wrap.querySelectorAll('[data-edit]').forEach(btn => {
-    btn.onclick = () => editItem(btn.dataset.edit);
+    btn.onclick = () => {
+      editingId = editingId === btn.dataset.edit ? null : btn.dataset.edit;
+      renderMenu();
+    };
   });
   wrap.querySelectorAll('[data-copy]').forEach(btn => {
     btn.onclick = () => copyItem(btn.dataset.copy);
@@ -163,9 +199,36 @@ function renderMenu(){
       if(!confirm('確定刪除這個品項嗎？')) return;
       await fetch(`/api/admin/menu/${btn.dataset.delete}`, { method:'DELETE', headers:{'x-admin-pin':PIN} });
       showToast('已刪除');
+      if(editingId === btn.dataset.delete) editingId = null;
       loadMenu();
     };
   });
+
+  const saveEditBtn = document.getElementById('saveEditBtn');
+  if(saveEditBtn){
+    saveEditBtn.onclick = async () => {
+      const category = document.getElementById('editCat').value.trim();
+      const emoji = document.getElementById('editEmoji').value.trim() || '🍽️';
+      const name = document.getElementById('editName').value.trim();
+      const price = Number(document.getElementById('editPrice').value);
+      const groups = parseGroups(document.getElementById('editGroups').value);
+      if(!category || !name || !price){
+        showToast('請填寫分類、品名、價格');
+        return;
+      }
+      await fetch(`/api/admin/menu/${editingId}`, {
+        method:'PUT', headers:{'Content-Type':'application/json','x-admin-pin':PIN},
+        body: JSON.stringify({ category, emoji, name, price, groups })
+      });
+      showToast('已儲存修改');
+      editingId = null;
+      loadMenu();
+    };
+  }
+  const cancelInlineEditBtn = document.getElementById('cancelInlineEditBtn');
+  if(cancelInlineEditBtn){
+    cancelInlineEditBtn.onclick = () => { editingId = null; renderMenu(); };
+  }
 }
 
 async function updateItem(id, patch){
@@ -208,7 +271,7 @@ function groupsToText(groups){
 function copyItem(id){
   const item = MENU.find(i => i.id === id);
   if(!item) return;
-  exitEditMode();
+  editingId = null;
   document.getElementById('newCat').value = item.category;
   document.getElementById('newEmoji').value = item.emoji || '';
   document.getElementById('newName').value = item.name + '（複製）';
@@ -218,32 +281,6 @@ function copyItem(id){
   showToast(`已複製「${item.name}」的設定，改一改再新增`);
 }
 
-let editingId = null;
-
-function editItem(id){
-  const item = MENU.find(i => i.id === id);
-  if(!item) return;
-  editingId = id;
-  document.getElementById('newCat').value = item.category;
-  document.getElementById('newEmoji').value = item.emoji || '';
-  document.getElementById('newName').value = item.name;
-  document.getElementById('newPrice').value = item.price;
-  document.getElementById('newGroups').value = groupsToText(item.groups);
-  document.getElementById('addBoxTitle').textContent = `✎ 編輯「${item.name}」`;
-  document.getElementById('addItemBtn').textContent = '儲存修改';
-  document.getElementById('cancelEditBtn').style.display = 'block';
-  document.querySelector('.add-box').scrollIntoView({ behavior: 'smooth' });
-}
-
-function exitEditMode(){
-  editingId = null;
-  document.getElementById('addBoxTitle').textContent = '＋ 新增品項';
-  document.getElementById('addItemBtn').textContent = '新增品項';
-  document.getElementById('cancelEditBtn').style.display = 'none';
-  ['newCat','newEmoji','newName','newPrice','newGroups'].forEach(id => document.getElementById(id).value = '');
-}
-document.getElementById('cancelEditBtn').onclick = exitEditMode;
-
 document.getElementById('addItemBtn').onclick = async () => {
   const category = document.getElementById('newCat').value.trim();
   const emoji = document.getElementById('newEmoji').value.trim() || '🍽️';
@@ -252,16 +289,6 @@ document.getElementById('addItemBtn').onclick = async () => {
   const groups = parseGroups(document.getElementById('newGroups').value);
   if(!category || !name || !price){
     showToast('請填寫分類、品名、價格');
-    return;
-  }
-  if(editingId){
-    await fetch(`/api/admin/menu/${editingId}`, {
-      method:'PUT', headers:{'Content-Type':'application/json','x-admin-pin':PIN},
-      body: JSON.stringify({ category, emoji, name, price, groups })
-    });
-    showToast('已儲存修改');
-    exitEditMode();
-    loadMenu();
     return;
   }
   await fetch('/api/admin/menu', {
