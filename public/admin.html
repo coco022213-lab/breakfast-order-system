@@ -41,6 +41,18 @@
   }
   @keyframes expand{ from{ opacity:0; transform:translateY(-6px);} to{ opacity:1; transform:translateY(0);} }
 
+  .cat-emoji-box{
+    background:var(--white); border-radius:14px; padding:16px; box-shadow:var(--shadow); margin-bottom:20px;
+  }
+  .cat-emoji-box h2{ font-size:15px; font-weight:900; margin:0 0 10px; }
+  .cat-emoji-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .cat-emoji-row .cname{ font-weight:700; font-size:13px; flex:1; }
+  .cat-emoji-row input{
+    width:56px; text-align:center; padding:8px; border:2px solid var(--paper-deep); border-radius:8px;
+    font-family:inherit; font-size:16px;
+  }
+  .cat-emoji-row button{ padding:8px 14px; font-size:12px; border-radius:8px; }
+
   .add-box{
     background:var(--white); border-radius:14px; padding:18px; box-shadow:var(--shadow); margin-top:30px;
   }
@@ -74,6 +86,12 @@
       <span class="save-note" id="saveNote">✓ 已儲存</span>
     </div>
   </div>
+  <div class="wrap">
+    <div class="cat-emoji-box">
+      <h2>🎨 分類圖示</h2>
+      <div id="catEmojiList"></div>
+    </div>
+  </div>
   <div class="wrap" id="menuWrap"></div>
 
   <div class="wrap">
@@ -81,17 +99,17 @@
       <h2>＋ 新增品項</h2>
       <div class="field-row">
         <div class="field"><label>分類</label><input id="newCat" placeholder="例：蛋餅"></div>
-        <div class="field"><label>圖示(emoji)</label><input id="newEmoji" placeholder="🥚"></div>
-      </div>
-      <div class="field-row">
-        <div class="field"><label>品名</label><input id="newName" placeholder="例：起司蛋餅"></div>
         <div class="field"><label>基本價格</label><input id="newPrice" type="number" placeholder="30"></div>
+      </div>
+      <div class="field">
+        <label>品名</label><input id="newName" placeholder="例：起司蛋餅">
       </div>
       <div class="field">
         <label>客製化選項（進階，可留空）</label>
         <textarea id="newGroups" rows="4" placeholder="辣度:不辣,小辣,大辣&#10;加料(可複選):起司+10,培根+15"></textarea>
         <div class="hint">每行一組，格式「名稱:選項1,選項2:選項3+加價」。<br>預設是「單選」(客人一定要選一個，像辣度、甜度)；如果是可以自由加、不加、甚至同時加好幾樣的(像加料)，在名稱後面加「(可複選)」，例如「加料(可複選):起司+10,培根+15」。</div>
       </div>
+      <div class="hint" style="margin-bottom:14px;">💡 圖示不用在這裡設定，是跟著「分類」走的，去上面「分類圖示」那一區改就好。如果是全新的分類，新增後記得去那邊補一個圖示。</div>
       <button class="btn btn-primary" style="width:100%;" id="addItemBtn">新增品項</button>
     </div>
   </div>
@@ -124,7 +142,36 @@ if(PIN) tryLogin(PIN);
 async function loadMenu(){
   const res = await fetch('/api/menu?all=1');
   MENU = await res.json();
+  renderCatEmojiList();
   renderMenu();
+}
+
+function renderCatEmojiList(){
+  const wrap = document.getElementById('catEmojiList');
+  const categories = [...new Set(MENU.map(i => i.category))];
+  wrap.innerHTML = categories.map(cat => {
+    const emoji = (MENU.find(i => i.category === cat) || {}).emoji || '🍽️';
+    return `
+      <div class="cat-emoji-row">
+        <input value="${emoji}" data-cat="${cat}" maxlength="4">
+        <span class="cname">${cat}</span>
+        <button class="btn btn-primary" data-save-cat-emoji="${cat}">套用</button>
+      </div>`;
+  }).join('');
+  wrap.querySelectorAll('[data-save-cat-emoji]').forEach(btn => {
+    btn.onclick = async () => {
+      const cat = btn.dataset.saveCatEmoji;
+      const input = wrap.querySelector(`input[data-cat="${cat}"]`);
+      const emoji = input.value.trim();
+      if(!emoji){ showToast('請輸入一個圖示'); return; }
+      await fetch('/api/admin/category-emoji', {
+        method:'PUT', headers:{'Content-Type':'application/json','x-admin-pin':PIN},
+        body: JSON.stringify({ category: cat, emoji })
+      });
+      showToast(`「${cat}」分類的圖示已更新`);
+      loadMenu();
+    };
+  });
 }
 
 function renderMenu(){
@@ -159,11 +206,10 @@ function renderMenu(){
         panel.innerHTML = `
           <div class="field-row">
             <div class="field"><label>分類</label><input id="editCat" value="${item.category}"></div>
-            <div class="field"><label>圖示(emoji)</label><input id="editEmoji" value="${item.emoji||''}"></div>
-          </div>
-          <div class="field-row">
-            <div class="field"><label>品名</label><input id="editName" value="${item.name}"></div>
             <div class="field"><label>基本價格</label><input id="editPrice" type="number" value="${item.price}"></div>
+          </div>
+          <div class="field">
+            <label>品名</label><input id="editName" value="${item.name}">
           </div>
           <div class="field">
             <label>客製化選項</label>
@@ -185,11 +231,10 @@ function renderMenu(){
           <div class="hint" style="margin-bottom:10px;">複製自「${item.name}」，改好內容後按下方新增，會變成一個全新的品項。</div>
           <div class="field-row">
             <div class="field"><label>分類</label><input id="copyCat" value="${item.category}"></div>
-            <div class="field"><label>圖示(emoji)</label><input id="copyEmoji" value="${item.emoji||''}"></div>
-          </div>
-          <div class="field-row">
-            <div class="field"><label>品名</label><input id="copyName" value="${item.name}"></div>
             <div class="field"><label>基本價格</label><input id="copyPrice" type="number" value="${item.price}"></div>
+          </div>
+          <div class="field">
+            <label>品名</label><input id="copyName" value="${item.name}">
           </div>
           <div class="field">
             <label>客製化選項</label>
@@ -242,7 +287,6 @@ function renderMenu(){
   if(saveEditBtn){
     saveEditBtn.onclick = async () => {
       const category = document.getElementById('editCat').value.trim();
-      const emoji = document.getElementById('editEmoji').value.trim() || '🍽️';
       const name = document.getElementById('editName').value.trim();
       const price = Number(document.getElementById('editPrice').value);
       const groups = parseGroups(document.getElementById('editGroups').value);
@@ -252,7 +296,7 @@ function renderMenu(){
       }
       await fetch(`/api/admin/menu/${editingId}`, {
         method:'PUT', headers:{'Content-Type':'application/json','x-admin-pin':PIN},
-        body: JSON.stringify({ category, emoji, name, price, groups })
+        body: JSON.stringify({ category, name, price, groups })
       });
       showToast('已儲存修改');
       editingId = null;
@@ -268,7 +312,6 @@ function renderMenu(){
   if(saveCopyBtn){
     saveCopyBtn.onclick = async () => {
       const category = document.getElementById('copyCat').value.trim();
-      const emoji = document.getElementById('copyEmoji').value.trim() || '🍽️';
       const name = document.getElementById('copyName').value.trim();
       const price = Number(document.getElementById('copyPrice').value);
       const groups = parseGroups(document.getElementById('copyGroups').value);
@@ -278,7 +321,7 @@ function renderMenu(){
       }
       await fetch('/api/admin/menu', {
         method:'POST', headers:{'Content-Type':'application/json','x-admin-pin':PIN},
-        body: JSON.stringify({ category, emoji, name, price, groups })
+        body: JSON.stringify({ category, name, price, groups })
       });
       showToast('已新增品項');
       copyingId = null;
@@ -330,7 +373,6 @@ function groupsToText(groups){
 
 document.getElementById('addItemBtn').onclick = async () => {
   const category = document.getElementById('newCat').value.trim();
-  const emoji = document.getElementById('newEmoji').value.trim() || '🍽️';
   const name = document.getElementById('newName').value.trim();
   const price = Number(document.getElementById('newPrice').value);
   const groups = parseGroups(document.getElementById('newGroups').value);
@@ -340,9 +382,9 @@ document.getElementById('addItemBtn').onclick = async () => {
   }
   await fetch('/api/admin/menu', {
     method:'POST', headers:{'Content-Type':'application/json','x-admin-pin':PIN},
-    body: JSON.stringify({ category, emoji, name, price, groups })
+    body: JSON.stringify({ category, name, price, groups })
   });
-  ['newCat','newEmoji','newName','newPrice','newGroups'].forEach(id => document.getElementById(id).value='');
+  ['newCat','newName','newPrice','newGroups'].forEach(id => document.getElementById(id).value='');
   showToast('已新增品項');
   loadMenu();
 };
