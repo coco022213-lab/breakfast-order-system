@@ -220,4 +220,11 @@ app.post('/api/orders/:id/cancel', (req, res) => {
   res.json(order);
 });
 
+// 結束今日營業：把叫號重設回 0，明天第一筆訂單會是 No.01（不影響任何歷史訂單資料或營業額統計）
+app.post('/api/admin/reset-counter', (req, res) => {
+  db.orderCounter = 0;
+  saveData();
+  res.json({ ok: true });
+});
+
 server.listen(PORT, () => console.log('伺服器啟動於 port ' + PORT));
