@@ -1,0 +1,2246 @@
+[
+  {
+    "id": "m1",
+    "category": "吐司",
+    "emoji": "🍞",
+    "name": "巧克力吐司",
+    "price": 15,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m2",
+    "category": "吐司",
+    "emoji": "🍞",
+    "name": "奶酥吐司",
+    "price": 15,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m3",
+    "category": "吐司",
+    "emoji": "🍞",
+    "name": "草莓吐司",
+    "price": 15,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m4",
+    "category": "吐司",
+    "emoji": "🍞",
+    "name": "奶油吐司",
+    "price": 15,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m5",
+    "category": "吐司",
+    "emoji": "🍞",
+    "name": "花生吐司",
+    "price": 15,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m6",
+    "category": "吐司",
+    "emoji": "🍞",
+    "name": "吐司加蛋",
+    "price": 25,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m7",
+    "category": "吐司",
+    "emoji": "🍞",
+    "name": "鮪魚蛋吐司",
+    "price": 30,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m8",
+    "category": "吐司",
+    "emoji": "🍞",
+    "name": "肉鬆蛋吐司",
+    "price": 35,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m9",
+    "category": "吐司",
+    "emoji": "🍞",
+    "name": "豬肉蛋吐司",
+    "price": 40,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m10",
+    "category": "吐司",
+    "emoji": "🍞",
+    "name": "麥克雞蛋吐司",
+    "price": 45,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m11",
+    "category": "吐司",
+    "emoji": "🍞",
+    "name": "麥香雞蛋吐司",
+    "price": 45,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m12",
+    "category": "吐司",
+    "emoji": "🍞",
+    "name": "火腿蛋吐司",
+    "price": 40,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m13",
+    "category": "吐司",
+    "emoji": "🍞",
+    "name": "培根蛋吐司",
+    "price": 40,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m14",
+    "category": "吐司",
+    "emoji": "🍞",
+    "name": "薯餅蛋吐司",
+    "price": 50,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m15",
+    "category": "吐司",
+    "emoji": "🍞",
+    "name": "卡拉雞蛋吐司",
+    "price": 65,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m16",
+    "category": "吐司",
+    "emoji": "🍞",
+    "name": "總匯吐司",
+    "price": 70,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m17",
+    "category": "吐司",
+    "emoji": "🍞",
+    "name": "棺材板",
+    "price": 60,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m18",
+    "category": "厚片",
+    "emoji": "🍞",
+    "name": "巧克力厚片",
+    "price": 25,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m19",
+    "category": "厚片",
+    "emoji": "🍞",
+    "name": "奶酥厚片",
+    "price": 25,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m20",
+    "category": "厚片",
+    "emoji": "🍞",
+    "name": "草莓厚片",
+    "price": 25,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m21",
+    "category": "厚片",
+    "emoji": "🍞",
+    "name": "奶油厚片",
+    "price": 25,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m22",
+    "category": "厚片",
+    "emoji": "🍞",
+    "name": "花生厚片",
+    "price": 25,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m23",
+    "category": "蛋餅",
+    "emoji": "🌯",
+    "name": "原味蛋餅",
+    "price": 30,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "菜",
+            "extra": 20
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m24",
+    "category": "蛋餅",
+    "emoji": "🌯",
+    "name": "起司蛋餅",
+    "price": 40,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "菜",
+            "extra": 20
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m25",
+    "category": "蛋餅",
+    "emoji": "🌯",
+    "name": "玉米蛋餅",
+    "price": 40,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "菜",
+            "extra": 20
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m26",
+    "category": "蛋餅",
+    "emoji": "🌯",
+    "name": "肉鬆蛋餅",
+    "price": 40,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "菜",
+            "extra": 20
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m27",
+    "category": "蛋餅",
+    "emoji": "🌯",
+    "name": "火腿蛋餅",
+    "price": 40,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "菜",
+            "extra": 20
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m28",
+    "category": "蛋餅",
+    "emoji": "🌯",
+    "name": "豬肉蛋餅",
+    "price": 40,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "菜",
+            "extra": 20
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m29",
+    "category": "蛋餅",
+    "emoji": "🌯",
+    "name": "麥克雞蛋餅",
+    "price": 45,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "菜",
+            "extra": 20
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m30",
+    "category": "蛋餅",
+    "emoji": "🌯",
+    "name": "麥香雞蛋餅",
+    "price": 45,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "菜",
+            "extra": 20
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m31",
+    "category": "蛋餅",
+    "emoji": "🌯",
+    "name": "鮪魚蛋餅",
+    "price": 40,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "菜",
+            "extra": 20
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m32",
+    "category": "蛋餅",
+    "emoji": "🌯",
+    "name": "培根蛋餅",
+    "price": 40,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "菜",
+            "extra": 20
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m33",
+    "category": "蛋餅",
+    "emoji": "🌯",
+    "name": "薯餅蛋餅",
+    "price": 50,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "菜",
+            "extra": 20
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m34",
+    "category": "蛋餅",
+    "emoji": "🌯",
+    "name": "蔬菜蛋餅",
+    "price": 55,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "菜",
+            "extra": 20
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m35",
+    "category": "蛋餅",
+    "emoji": "🌯",
+    "name": "卡拉雞蛋餅",
+    "price": 75,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "菜",
+            "extra": 20
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m36",
+    "category": "蛋餅",
+    "emoji": "🌯",
+    "name": "總匯蛋餅",
+    "price": 70,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "菜",
+            "extra": 20
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m37",
+    "category": "漢堡",
+    "emoji": "🍔",
+    "name": "巧克力漢堡",
+    "price": 25,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m38",
+    "category": "漢堡",
+    "emoji": "🍔",
+    "name": "奶酥漢堡",
+    "price": 25,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m39",
+    "category": "漢堡",
+    "emoji": "🍔",
+    "name": "草莓漢堡",
+    "price": 25,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m40",
+    "category": "漢堡",
+    "emoji": "🍔",
+    "name": "奶油漢堡",
+    "price": 25,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m41",
+    "category": "漢堡",
+    "emoji": "🍔",
+    "name": "漢堡夾蛋",
+    "price": 25,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m42",
+    "category": "漢堡",
+    "emoji": "🍔",
+    "name": "鮪魚蛋漢堡",
+    "price": 30,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m43",
+    "category": "漢堡",
+    "emoji": "🍔",
+    "name": "肉鬆蛋漢堡",
+    "price": 40,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m44",
+    "category": "漢堡",
+    "emoji": "🍔",
+    "name": "豬肉蛋漢堡",
+    "price": 40,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m45",
+    "category": "漢堡",
+    "emoji": "🍔",
+    "name": "麥克雞蛋漢堡",
+    "price": 40,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m46",
+    "category": "漢堡",
+    "emoji": "🍔",
+    "name": "火腿蛋漢堡",
+    "price": 45,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m47",
+    "category": "漢堡",
+    "emoji": "🍔",
+    "name": "培根蛋漢堡",
+    "price": 40,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m48",
+    "category": "漢堡",
+    "emoji": "🍔",
+    "name": "薯餅蛋漢堡",
+    "price": 40,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m49",
+    "category": "漢堡",
+    "emoji": "🍔",
+    "name": "卡拉雞蛋漢堡",
+    "price": 50,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m50",
+    "category": "漢堡",
+    "emoji": "🍔",
+    "name": "牛肉蛋漢堡",
+    "price": 65,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m51",
+    "category": "漢堡",
+    "emoji": "🍔",
+    "name": "總匯漢堡",
+    "price": 60,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "客製",
+        "type": "multi",
+        "options": [
+          {
+            "v": "正常",
+            "extra": 0
+          },
+          {
+            "v": "不要菜",
+            "extra": 0
+          },
+          {
+            "v": "不要沙拉",
+            "extra": 0
+          }
+        ]
+      },
+      {
+        "key": "g1",
+        "label": "加料",
+        "type": "single",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          }
+        ],
+        "default": "不加"
+      }
+    ]
+  },
+  {
+    "id": "m52",
+    "category": "小點",
+    "emoji": "🍟",
+    "name": "熱狗",
+    "price": 20,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m53",
+    "category": "小點",
+    "emoji": "🍟",
+    "name": "細薯條",
+    "price": 30,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m54",
+    "category": "小點",
+    "emoji": "🍟",
+    "name": "波浪薯條",
+    "price": 30,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m55",
+    "category": "小點",
+    "emoji": "🍟",
+    "name": "薯餅(2塊)",
+    "price": 40,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m56",
+    "category": "小點",
+    "emoji": "🍟",
+    "name": "荷包蛋(1顆)",
+    "price": 15,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m57",
+    "category": "小點",
+    "emoji": "🍟",
+    "name": "水煮蛋(1顆)",
+    "price": 15,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m58",
+    "category": "小點",
+    "emoji": "🍟",
+    "name": "蘿蔔糕(2塊)",
+    "price": 30,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m59",
+    "category": "小點",
+    "emoji": "🍟",
+    "name": "蔥油餅",
+    "price": 25,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "multi",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          },
+          {
+            "v": "菜",
+            "extra": 20
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "m60",
+    "category": "小點",
+    "emoji": "🍟",
+    "name": "蔬菜蔥油餅",
+    "price": 55,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "multi",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "起司",
+            "extra": 15
+          },
+          {
+            "v": "菜",
+            "extra": 20
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "m61",
+    "category": "飲料",
+    "emoji": "🥤",
+    "name": "紅茶(大杯)",
+    "price": 15,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "甜度",
+        "type": "single",
+        "options": [
+          {
+            "v": "無糖",
+            "extra": 0
+          },
+          {
+            "v": "微糖",
+            "extra": 0
+          },
+          {
+            "v": "半糖",
+            "extra": 0
+          },
+          {
+            "v": "正常甜",
+            "extra": 0
+          }
+        ],
+        "default": "無糖"
+      },
+      {
+        "key": "g1",
+        "label": "冰溫",
+        "type": "single",
+        "options": [
+          {
+            "v": "冰的、溫的",
+            "extra": 0
+          }
+        ],
+        "default": "冰的、溫的"
+      }
+    ]
+  },
+  {
+    "id": "m62",
+    "category": "飲料",
+    "emoji": "🥤",
+    "name": "紅茶(中杯)",
+    "price": 10,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "甜度",
+        "type": "single",
+        "options": [
+          {
+            "v": "無糖",
+            "extra": 0
+          },
+          {
+            "v": "微糖",
+            "extra": 0
+          },
+          {
+            "v": "半糖",
+            "extra": 0
+          },
+          {
+            "v": "正常甜",
+            "extra": 0
+          }
+        ],
+        "default": "無糖"
+      },
+      {
+        "key": "g1",
+        "label": "冰溫",
+        "type": "single",
+        "options": [
+          {
+            "v": "冰的、溫的",
+            "extra": 0
+          }
+        ],
+        "default": "冰的、溫的"
+      }
+    ]
+  },
+  {
+    "id": "m63",
+    "category": "飲料",
+    "emoji": "🥤",
+    "name": "紅茶(小杯)",
+    "price": 10,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "甜度",
+        "type": "single",
+        "options": [
+          {
+            "v": "無糖",
+            "extra": 0
+          },
+          {
+            "v": "微糖",
+            "extra": 0
+          },
+          {
+            "v": "半糖",
+            "extra": 0
+          },
+          {
+            "v": "正常甜",
+            "extra": 0
+          }
+        ],
+        "default": "無糖"
+      },
+      {
+        "key": "g1",
+        "label": "冰溫",
+        "type": "single",
+        "options": [
+          {
+            "v": "冰的、溫的",
+            "extra": 0
+          }
+        ],
+        "default": "冰的、溫的"
+      }
+    ]
+  },
+  {
+    "id": "m64",
+    "category": "飲料",
+    "emoji": "🥤",
+    "name": "綠茶(大杯)",
+    "price": 15,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "甜度",
+        "type": "single",
+        "options": [
+          {
+            "v": "無糖",
+            "extra": 0
+          },
+          {
+            "v": "微糖",
+            "extra": 0
+          },
+          {
+            "v": "半糖",
+            "extra": 0
+          },
+          {
+            "v": "正常甜",
+            "extra": 0
+          }
+        ],
+        "default": "無糖"
+      },
+      {
+        "key": "g1",
+        "label": "冰溫",
+        "type": "single",
+        "options": [
+          {
+            "v": "冰的、溫的",
+            "extra": 0
+          }
+        ],
+        "default": "冰的、溫的"
+      }
+    ]
+  },
+  {
+    "id": "m65",
+    "category": "飲料",
+    "emoji": "🥤",
+    "name": "綠茶(中杯)",
+    "price": 10,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "甜度",
+        "type": "single",
+        "options": [
+          {
+            "v": "無糖",
+            "extra": 0
+          },
+          {
+            "v": "微糖",
+            "extra": 0
+          },
+          {
+            "v": "半糖",
+            "extra": 0
+          },
+          {
+            "v": "正常甜",
+            "extra": 0
+          }
+        ],
+        "default": "無糖"
+      },
+      {
+        "key": "g1",
+        "label": "冰溫",
+        "type": "single",
+        "options": [
+          {
+            "v": "冰的、溫的",
+            "extra": 0
+          }
+        ],
+        "default": "冰的、溫的"
+      }
+    ]
+  },
+  {
+    "id": "m66",
+    "category": "飲料",
+    "emoji": "🥤",
+    "name": "綠茶(小杯)",
+    "price": 10,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "甜度",
+        "type": "single",
+        "options": [
+          {
+            "v": "無糖",
+            "extra": 0
+          },
+          {
+            "v": "微糖",
+            "extra": 0
+          },
+          {
+            "v": "半糖",
+            "extra": 0
+          },
+          {
+            "v": "正常甜",
+            "extra": 0
+          }
+        ],
+        "default": "無糖"
+      },
+      {
+        "key": "g1",
+        "label": "冰溫",
+        "type": "single",
+        "options": [
+          {
+            "v": "冰的、溫的",
+            "extra": 0
+          }
+        ],
+        "default": "冰的、溫的"
+      }
+    ]
+  },
+  {
+    "id": "m67",
+    "category": "飲料",
+    "emoji": "🥤",
+    "name": "奶茶(大杯)",
+    "price": 30,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "冰溫",
+        "type": "single",
+        "options": [
+          {
+            "v": "冰的、溫的",
+            "extra": 0
+          }
+        ],
+        "default": "冰的、溫的"
+      }
+    ]
+  },
+  {
+    "id": "m68",
+    "category": "飲料",
+    "emoji": "🥤",
+    "name": "奶茶(中杯)",
+    "price": 25,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "冰溫",
+        "type": "single",
+        "options": [
+          {
+            "v": "冰的、溫的",
+            "extra": 0
+          }
+        ],
+        "default": "冰的、溫的"
+      }
+    ]
+  },
+  {
+    "id": "m69",
+    "category": "飲料",
+    "emoji": "🥤",
+    "name": "奶茶(小杯)",
+    "price": 15,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "冰溫",
+        "type": "single",
+        "options": [
+          {
+            "v": "冰的、溫的",
+            "extra": 0
+          }
+        ],
+        "default": "冰的、溫的"
+      }
+    ]
+  },
+  {
+    "id": "m70",
+    "category": "飲料",
+    "emoji": "🥤",
+    "name": "咖啡牛奶(大杯)",
+    "price": 30,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "冰溫",
+        "type": "single",
+        "options": [
+          {
+            "v": "冰的、溫的",
+            "extra": 0
+          }
+        ],
+        "default": "冰的、溫的"
+      }
+    ]
+  },
+  {
+    "id": "m71",
+    "category": "飲料",
+    "emoji": "🥤",
+    "name": "咖啡牛奶(中杯)",
+    "price": 25,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "冰溫",
+        "type": "single",
+        "options": [
+          {
+            "v": "冰的、溫的",
+            "extra": 0
+          }
+        ],
+        "default": "冰的、溫的"
+      }
+    ]
+  },
+  {
+    "id": "m72",
+    "category": "飲料",
+    "emoji": "🥤",
+    "name": "咖啡牛奶(小杯)",
+    "price": 15,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "冰溫",
+        "type": "single",
+        "options": [
+          {
+            "v": "冰的、溫的",
+            "extra": 0
+          }
+        ],
+        "default": "冰的、溫的"
+      }
+    ]
+  },
+  {
+    "id": "m73",
+    "category": "飲料",
+    "emoji": "🥤",
+    "name": "可樂(大杯)",
+    "price": 30,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m74",
+    "category": "飲料",
+    "emoji": "🥤",
+    "name": "可樂(中杯)",
+    "price": 25,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m75",
+    "category": "飲料",
+    "emoji": "🥤",
+    "name": "可樂(小杯)",
+    "price": 15,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m76",
+    "category": "飲料",
+    "emoji": "🥤",
+    "name": "生活綠茶",
+    "price": 10,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m77",
+    "category": "飲料",
+    "emoji": "🥤",
+    "name": "麥香紅茶",
+    "price": 10,
+    "active": true,
+    "groups": []
+  },
+  {
+    "id": "m78",
+    "category": "麵類",
+    "emoji": "🍜",
+    "name": "鍋燒泡麵",
+    "price": 70,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "multi",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "蛋",
+            "extra": 15
+          },
+          {
+            "v": "菜",
+            "extra": 15
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "m79",
+    "category": "麵類",
+    "emoji": "🍜",
+    "name": "炒泡麵",
+    "price": 80,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "multi",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "蛋",
+            "extra": 15
+          },
+          {
+            "v": "菜",
+            "extra": 15
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "m80",
+    "category": "麵類",
+    "emoji": "🍜",
+    "name": "鍋燒意麵",
+    "price": 65,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "multi",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "蛋",
+            "extra": 15
+          },
+          {
+            "v": "菜",
+            "extra": 15
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "m81",
+    "category": "麵類",
+    "emoji": "🍜",
+    "name": "鍋燒冬粉",
+    "price": 65,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "multi",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "蛋",
+            "extra": 15
+          },
+          {
+            "v": "菜",
+            "extra": 15
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "m82",
+    "category": "麵類",
+    "emoji": "🍜",
+    "name": "鍋燒雞絲麵",
+    "price": 65,
+    "active": true,
+    "groups": [
+      {
+        "key": "g0",
+        "label": "加料",
+        "type": "multi",
+        "options": [
+          {
+            "v": "不加",
+            "extra": 0
+          },
+          {
+            "v": "蛋",
+            "extra": 15
+          },
+          {
+            "v": "菜",
+            "extra": 15
+          }
+        ]
+      }
+    ]
+  }
+]
