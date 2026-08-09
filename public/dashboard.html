@@ -45,6 +45,11 @@
   .order-row .right{ text-align:right; }
   .order-row .right .amount{ font-weight:900; color:var(--chili); font-size:16px; }
   .order-row .right .time{ font-size:11px; color:var(--ink-soft); }
+  .order-row .delete-btn{
+    background:none; border:2px solid var(--paper-deep); color:var(--ink-soft);
+    font-size:12px; padding:6px 10px; border-radius:8px; margin-top:6px; cursor:pointer; font-family:inherit;
+  }
+  .order-row .delete-btn:hover{ background:var(--chili); border-color:var(--chili); color:var(--white); }
 
   .empty-state{ text-align:center; padding:50px 20px; color:var(--ink-soft); }
 </style>
@@ -199,10 +204,18 @@ function renderStats(data){
           <div class="right">
             <div class="amount">$${o.total}</div>
             <div class="time">${time}</div>
+            <button class="delete-btn" data-delete-order="${o.id}">刪除</button>
           </div>
         </div>
       `;
     }).join('');
+    orderList.querySelectorAll('[data-delete-order]').forEach(btn => {
+      btn.onclick = async () => {
+        if(!confirm('確定要永久刪除這筆訂單紀錄嗎？此動作無法復原，如果是已收款的訂單，金額也會從當日營業額扣除。')) return;
+        await fetch(`/api/admin/orders/${btn.dataset.deleteOrder}`, { method:'DELETE', headers:{'x-admin-pin':PIN} });
+        loadStats();
+      };
+    });
   }
 }
 </script>
