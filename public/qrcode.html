@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>點餐 QR Code・荷香早餐店</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link rel="stylesheet" href="/style.css">
+<style>
+  .wrap{ padding:40px 16px 60px; display:flex; align-items:center; justify-content:center; }
+
+  .card{
+    background:var(--white);
+    border-radius:24px;
+    padding:44px 40px 34px;
+    max-width:420px;
+    width:100%;
+    text-align:center;
+    box-shadow:var(--shadow);
+  }
+  .eyebrow{
+    font-size:12px; font-weight:700; letter-spacing:3px; color:var(--chili);
+    text-transform:uppercase; margin-bottom:6px;
+  }
+  .store-name{
+    font-size:28px; font-weight:900; color:var(--ink); margin:0 0 4px;
+    letter-spacing:1px;
+  }
+  .subtitle{
+    font-size:14px; color:var(--ink-soft); margin-bottom:26px; font-weight:500;
+  }
+
+  .qr-frame{
+    background:var(--paper);
+    border-radius:18px;
+    padding:20px;
+    display:inline-block;
+    border:2px solid var(--paper-deep);
+  }
+  #qrcode{ line-height:0; }
+  #qrcode img{ display:block; border-radius:6px; }
+
+  .instructions{
+    margin-top:24px; padding-top:20px; border-top:2px dashed var(--paper-deep);
+  }
+  .step{
+    display:flex; align-items:center; gap:10px; font-size:14px; color:var(--ink);
+    font-weight:700; margin-bottom:8px; text-align:left;
+  }
+  .step .num{
+    width:22px; height:22px; border-radius:100px; background:var(--ink); color:var(--paper);
+    display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0;
+  }
+  .footer-note{
+    margin-top:20px; font-size:12px; color:var(--chili); font-weight:700;
+  }
+
+  .url-box{
+    margin-top:18px; font-size:11px; color:var(--ink-soft); word-break:break-all;
+    background:var(--paper); border-radius:8px; padding:8px 10px;
+  }
+
+  .print-btn{ margin-top:22px; width:100%; }
+
+  @media print{
+    body{ background:var(--white); }
+    .topbar, .print-btn{ display:none; }
+    .wrap{ padding:0; }
+    .card{ box-shadow:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div><h1>📱 點餐 QR Code</h1><div class="sub">給顧客掃描用，可以重新列印</div></div>
+  <div style="display:flex; gap:8px;">
+    <a href="/kitchen.html" style="color:var(--paper); text-decoration:none; font-size:13px; background:rgba(255,255,255,0.12); padding:8px 14px; border-radius:100px;">👵 出餐看板</a>
+    <a href="/admin.html" style="color:var(--paper); text-decoration:none; font-size:13px; background:rgba(255,255,255,0.12); padding:8px 14px; border-radius:100px;">🍳 菜單管理</a>
+    <a href="/dashboard.html" style="color:var(--paper); text-decoration:none; font-size:13px; background:rgba(255,255,255,0.12); padding:8px 14px; border-radius:100px;">📊 營業儀表板</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <div class="eyebrow">Scan to order</div>
+    <h1 class="store-name">🍳 荷香早餐店</h1>
+    <div class="subtitle">掃描 QR Code，線上點餐</div>
+
+    <div class="qr-frame">
+      <div id="qrcode"></div>
+    </div>
+
+    <div class="instructions">
+      <div class="step"><span class="num">1</span> 用手機相機掃描上方 QR Code</div>
+      <div class="step"><span class="num">2</span> 選餐點、輸入姓名或桌號</div>
+      <div class="step"><span class="num">3</span> 送出後至櫃檯取餐付款</div>
+    </div>
+
+    <div class="footer-note">💰 現場付現金</div>
+
+    <div class="url-box" id="urlText"></div>
+
+    <button class="btn btn-primary print-btn" id="printBtn">🖨️ 列印這張 QR Code</button>
+  </div>
+</div>
+
+<script>
+  const ORDER_URL = window.location.origin + "/customer.html";
+
+  document.getElementById('urlText').textContent = ORDER_URL;
+
+  new QRCode(document.getElementById("qrcode"), {
+    text: ORDER_URL,
+    width: 220,
+    height: 220,
+    colorDark: "#4A2E1E",
+    colorLight: "#FFFDF7",
+    correctLevel: QRCode.CorrectLevel.H
+  });
+
+  document.getElementById('printBtn').onclick = () => window.print();
+</script>
+
+</body>
+</html>
