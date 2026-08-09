@@ -54,13 +54,12 @@
     display:flex; align-items:center; gap:12px; box-shadow:var(--shadow); font-size:14px; color:var(--ink-soft);
   }
 
-  .sound-banner{
-    background:var(--yolk); color:var(--ink); border-radius:14px; padding:14px 18px; margin-bottom:20px;
-    display:flex; align-items:center; justify-content:space-between; gap:12px; cursor:pointer; font-weight:700;
-    box-shadow:var(--shadow);
+  .sound-hint{
+    background:rgba(255,255,255,0.1); color:var(--paper); border-radius:100px; padding:6px 14px;
+    font-size:12px; font-weight:700; display:flex; align-items:center; gap:6px;
   }
-  .sound-banner span{ font-size:15px; }
-  .sound-banner button{ padding:10px 18px; }
+  .sound-hint .dot{ width:8px; height:8px; border-radius:100px; background:#5CBA6A; }
+  .sound-hint.off .dot{ background:#C23616; }
 
   .ticket.warn{ box-shadow:0 0 0 3px var(--yolk), var(--shadow); }
   .ticket.urgent{ box-shadow:0 0 0 3px var(--chili), var(--shadow); animation:urgentPulse 1.2s infinite; }
@@ -86,16 +85,13 @@
 <body>
 <div class="topbar">
   <div><h1>👵 出餐看板</h1><div class="sub">依點餐順序排列・完成請按「完成並收款」</div></div>
-  <div style="display:flex; gap:8px;">
+  <div style="display:flex; align-items:center; gap:8px;">
+    <span class="sound-hint off" id="soundHint"><span class="dot"></span>提示音準備中</span>
     <a href="/dashboard.html" style="color:var(--paper); text-decoration:none; font-size:13px; background:rgba(255,255,255,0.12); padding:8px 14px; border-radius:100px;">📊 營業儀表板</a>
     <a href="/admin.html" style="color:var(--paper); text-decoration:none; font-size:13px; background:rgba(255,255,255,0.12); padding:8px 14px; border-radius:100px;">🍳 菜單管理</a>
   </div>
 </div>
 <div class="wrap">
-  <div id="soundBanner" class="sound-banner">
-    <span>🔔 點一下開啟「新訂單」提示音（每次開啟看板後需要點一次）</span>
-    <button class="btn btn-primary" id="enableSoundBtn">開啟提示音</button>
-  </div>
   <div class="head-row">
     <div class="qr-hint" style="flex:1;">📱 顧客請掃店內 QR Code 至 <b>/customer.html</b> 點餐</div>
     <div class="today-total">
@@ -118,16 +114,29 @@ let recentlyCompleted = []; // 最近完成的訂單，供「復原」使用
 const RECENT_LIMIT = 8;
 const socket = io();
 
-// ---------------- 提示音 ----------------
+// ---------------- 提示音（第一次點畫面任何地方就自動啟用，不用特地按按鈕） ----------------
 let audioCtx = null;
 let soundEnabled = false;
 
-function setupSound(){
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function markSoundReady(){
   soundEnabled = true;
-  document.getElementById('soundBanner').style.display = 'none';
+  const hint = document.getElementById('soundHint');
+  hint.classList.remove('off');
+  hint.innerHTML = '<span class="dot"></span>提示音已開啟';
 }
-document.getElementById('enableSoundBtn').onclick = setupSound;
+
+function unlockAudioOnce(){
+  if(!audioCtx){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if(audioCtx.state === 'suspended'){
+    audioCtx.resume().then(markSoundReady).catch(()=>{});
+  } else {
+    markSoundReady();
+  }
+}
+document.addEventListener('click', unlockAudioOnce, { once: true });
+document.addEventListener('touchstart', unlockAudioOnce, { once: true });
 
 function playChime(){
   if(!soundEnabled || !audioCtx) return;
