@@ -93,6 +93,22 @@
   .status-badge.cancelled{ background:rgba(194,54,22,0.15); color:var(--chili-deep); }
   @keyframes spin{ to{ transform:rotate(360deg); } }
   .status-icon.spinning{ display:inline-block; animation:spin 2s linear infinite; }
+  .status-links{ margin-top:10px; }
+  .status-links a{ color:var(--ink-soft); font-size:12px; font-weight:700; text-decoration:underline; cursor:pointer; }
+
+  .history-btn{
+    background:rgba(255,255,255,0.12); border:none; color:var(--paper); font-family:inherit;
+    font-size:12px; font-weight:700; padding:8px 14px; border-radius:100px; cursor:pointer;
+  }
+  .history-row{
+    background:var(--paper); border-radius:10px; padding:12px 14px; margin-bottom:8px;
+  }
+  .history-row .hrow1{ display:flex; justify-content:space-between; align-items:center; }
+  .history-row .hnum{ font-weight:900; font-size:14px; }
+  .history-row .htime{ font-size:11px; color:var(--ink-soft); }
+  .history-row .hitems{ font-size:12px; color:var(--ink-soft); margin-top:4px; }
+  .history-row .hbottom{ display:flex; justify-content:space-between; align-items:center; margin-top:6px; }
+  .history-row .hamount{ font-weight:900; color:var(--chili); font-size:13px; }
 </style>
 </head>
 <body>
@@ -103,6 +119,7 @@
     <h1>🍳 荷香早餐店</h1>
     <div class="sub">線上點餐，現場取餐付款</div>
   </div>
+  <button class="history-btn" id="historyBtn">📋 我的訂單紀錄</button>
 </div>
 
 <div class="name-bar">
@@ -131,6 +148,7 @@
 
 <div class="overlay" id="overlay"><div class="modal" id="modalBody"></div></div>
 <div class="overlay" id="cartOverlay"><div class="modal" id="cartModalBody"></div></div>
+<div class="overlay" id="historyOverlay"><div class="modal" id="historyModalBody"></div></div>
 <div class="toast" id="toast"></div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -318,6 +336,7 @@ async function submitOrder(){
   updateCartBar();
   document.getElementById('cartOverlay').classList.remove('active');
   sessionStorage.setItem('trackedOrderId', order.id);
+  rememberOrderId(order.id);
   showOrderStatus(order);
 }
 
@@ -396,6 +415,7 @@ function renderStatusCard(){
       <div class="status-total"><span>總計</span><span>$${order.total}</span></div>
     </div>
     <button class="btn btn-primary" style="width:100%;" id="newOrderBtn">🍳 我要再點一份</button>
+    <div class="status-links"><a id="viewHistoryLink">📋 查看我的訂單紀錄</a></div>
   `;
   document.getElementById('newOrderBtn').onclick = () => {
     sessionStorage.removeItem('trackedOrderId');
@@ -403,6 +423,7 @@ function renderStatusCard(){
     document.getElementById('statusView').style.display = 'none';
     document.getElementById('orderingView').style.display = 'block';
   };
+  document.getElementById('viewHistoryLink').onclick = openHistory;
 }
 
 socket.on('order_ready', (order) => {
@@ -443,6 +464,64 @@ async function checkTrackedOrder(){
   } catch(e){
     return false;
   }
+}
+
+// ---------------- 我的訂單紀錄（記在這台裝置的瀏覽器裡，最多保留 20 筆） ----------------
+const HISTORY_LIMIT = 20;
+
+function rememberOrderId(id){
+  const ids = JSON.parse(localStorage.getItem('myOrderIds') || '[]');
+  const updated = [id, ...ids.filter(x => x !== id)].slice(0, HISTORY_LIMIT);
+  localStorage.setItem('myOrderIds', JSON.stringify(updated));
+}
+
+document.getElementById('historyBtn').onclick = openHistory;
+
+async function openHistory(){
+  const ids = JSON.parse(localStorage.getItem('myOrderIds') || '[]');
+  const modal = document.getElementById('historyModalBody');
+  if(ids.length === 0){
+    modal.innerHTML = `
+      <div class="modal-head"><h3 style="margin:0;">我的訂單紀錄</h3><button class="close-x" id="historyClose">✕</button></div>
+      <div class="empty-state">這台裝置還沒有點餐紀錄</div>
+    `;
+    document.getElementById('historyOverlay').classList.add('active');
+    document.getElementById('historyClose').onclick = () => document.getElementById('historyOverlay').classList.remove('active');
+    return;
+  }
+  modal.innerHTML = `
+    <div class="modal-head"><h3 style="margin:0;">我的訂單紀錄</h3><button class="close-x" id="historyClose">✕</button></div>
+    <div id="historyList" style="margin-top:14px;"><div class="empty-state">載入中…</div></div>
+  `;
+  document.getElementById('historyOverlay').classList.add('active');
+  document.getElementById('historyClose').onclick = () => document.getElementById('historyOverlay').classList.remove('active');
+
+  const results = await Promise.all(ids.map(id => fetch(`/api/orders/${id}`).then(r => r.ok ? r.json() : null).catch(()=>null)));
+  const validOrders = results.filter(Boolean).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const list = document.getElementById('historyList');
+  if(!list) return; // 使用者可能已經關掉視窗
+  if(validOrders.length === 0){
+    list.innerHTML = '<div class="empty-state">找不到訂單紀錄</div>';
+    return;
+  }
+  list.innerHTML = validOrders.map(o => {
+    const meta = statusMeta(o);
+    const time = new Date(o.createdAt).toLocaleString('zh-TW', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'});
+    const itemsText = o.items.map(it => `${it.name}x${it.qty}`).join('、');
+    return `
+      <div class="history-row">
+        <div class="hrow1">
+          <span class="hnum">No.${String(o.num).padStart(2,'0')}</span>
+          <span class="status-badge ${meta.badgeClass}" style="margin-bottom:0;">${meta.badgeText}</span>
+        </div>
+        <div class="hitems">${itemsText}</div>
+        <div class="hbottom">
+          <span class="htime">${time}</span>
+          <span class="hamount">$${o.total}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 (async () => {
