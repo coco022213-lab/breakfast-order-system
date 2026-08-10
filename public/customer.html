@@ -68,10 +68,36 @@
   .cart-total-row .amount{ font-size:24px; font-weight:900; color:var(--chili); }
 
   .empty-state{ text-align:center; padding:60px 20px; color:var(--ink-soft); }
+
+  /* order status tracking view */
+  #statusView{ display:none; min-height:100vh; align-items:center; justify-content:center; padding:20px; }
+  .status-card{
+    background:var(--white); border-radius:22px; padding:36px 26px; max-width:380px; width:100%;
+    text-align:center; box-shadow:var(--shadow);
+  }
+  .status-icon{ font-size:56px; margin-bottom:10px; }
+  .status-title{ font-size:20px; font-weight:900; margin-bottom:6px; }
+  .status-num{ font-size:44px; font-weight:900; color:var(--chili); margin:10px 0; }
+  .status-sub{ font-size:13px; color:var(--ink-soft); margin-bottom:20px; }
+  .status-items{ background:var(--paper); border-radius:12px; padding:14px; text-align:left; margin-bottom:18px; }
+  .status-items .sline{ font-size:13px; font-weight:700; margin-bottom:6px; }
+  .status-items .sline:last-child{ margin-bottom:0; }
+  .status-items .sopts{ font-size:12px; color:var(--chili-deep); font-weight:700; margin-left:8px; }
+  .status-total{ display:flex; justify-content:space-between; border-top:2px dashed var(--paper-deep); margin-top:10px; padding-top:10px; font-weight:900; }
+  .status-badge{
+    display:inline-block; font-size:12px; font-weight:900; padding:5px 14px; border-radius:100px; margin-bottom:16px;
+  }
+  .status-badge.pending{ background:rgba(240,165,0,0.18); color:#B87800; }
+  .status-badge.ready{ background:rgba(79,111,63,0.2); color:var(--scallion-deep); }
+  .status-badge.paid{ background:rgba(79,111,63,0.18); color:var(--scallion-deep); }
+  .status-badge.cancelled{ background:rgba(194,54,22,0.15); color:var(--chili-deep); }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .status-icon.spinning{ display:inline-block; animation:spin 2s linear infinite; }
 </style>
 </head>
 <body>
 
+<div id="orderingView">
 <div class="topbar">
   <div>
     <h1>🍳 荷香早餐店</h1>
@@ -97,11 +123,17 @@
   </div>
   <button class="btn" id="viewCartBtn">查看訂單</button>
 </div>
+</div>
+
+<div id="statusView">
+  <div class="status-card" id="statusCard"></div>
+</div>
 
 <div class="overlay" id="overlay"><div class="modal" id="modalBody"></div></div>
 <div class="overlay" id="cartOverlay"><div class="modal" id="cartModalBody"></div></div>
 <div class="toast" id="toast"></div>
 
+<script src="/socket.io/socket.io.js"></script>
 <script>
 let MENU = [];
 let categories = [];
@@ -281,21 +313,12 @@ async function submitOrder(){
   });
   if(!res.ok){ showToast('送出失敗，請再試一次'); return; }
   const order = await res.json();
+  unlockAudio();
   cart = [];
   updateCartBar();
   document.getElementById('cartOverlay').classList.remove('active');
-  document.getElementById('cartModalBody').innerHTML = `
-    <div style="text-align:center; padding:20px 0;">
-      <div style="font-size:48px;">✅</div>
-      <h3 style="margin:14px 0 6px;">訂單已送出！</h3>
-      <p style="color:var(--ink-soft); font-size:14px;">您的取餐號碼</p>
-      <div style="font-size:40px; font-weight:900; color:var(--chili); margin:6px 0 16px;">No. ${String(order.num).padStart(2,'0')}</div>
-      <p style="color:var(--ink-soft); font-size:13px;">${order.orderType === 'takeout' ? '🥡 外帶自取' : '🍽️ 內用'}・請至櫃檯以「${order.customerName}」取餐並付款・應付 $${order.total}</p>
-      <button class="btn btn-primary" style="width:100%;margin-top:16px;" id="okBtn">好的</button>
-    </div>
-  `;
-  document.getElementById('cartOverlay').classList.add('active');
-  document.getElementById('okBtn').onclick = () => document.getElementById('cartOverlay').classList.remove('active');
+  sessionStorage.setItem('trackedOrderId', order.id);
+  showOrderStatus(order);
 }
 
 function showToast(msg){
@@ -305,7 +328,127 @@ function showToast(msg){
   window.__toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
 }
 
-loadMenu();
+// ---------------- 訂單狀態追蹤 ----------------
+const socket = io();
+let trackedOrder = null;
+let audioCtx = null;
+
+function unlockAudio(){
+  if(!audioCtx){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playChime(){
+  if(!audioCtx) return;
+  const now = audioCtx.currentTime;
+  [880, 1175].forEach((freq, i) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, now + i * 0.18);
+    gain.gain.linearRampToValueAtTime(0.3, now + i * 0.18 + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.18 + 0.35);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now + i * 0.18);
+    osc.stop(now + i * 0.18 + 0.4);
+  });
+}
+
+function statusMeta(order){
+  if(order.status === 'paid'){
+    return { icon:'✅', spinning:false, badgeClass:'paid', badgeText:'已完成取餐', title:'餐點已經取用完成囉！' };
+  }
+  if(order.status === 'ready'){
+    return { icon:'🔔', spinning:false, badgeClass:'ready', badgeText:'可以取餐了',
+      title: order.orderType === 'takeout' ? '餐點已經好了，可以來取餐囉！' : '餐點已經好了！' };
+  }
+  if(order.status === 'cancelled'){
+    return { icon:'❌', spinning:false, badgeClass:'cancelled', badgeText:'訂單已取消', title:'這筆訂單已被取消' };
+  }
+  return { icon:'🧑‍🍳', spinning:true, badgeClass:'pending', badgeText:'製作中', title:'餐點準備中，請稍候' };
+}
+
+function showOrderStatus(order){
+  trackedOrder = order;
+  document.getElementById('orderingView').style.display = 'none';
+  document.getElementById('statusView').style.display = 'flex';
+  renderStatusCard();
+}
+
+function renderStatusCard(){
+  const order = trackedOrder;
+  const meta = statusMeta(order);
+  const itemsHtml = order.items.map(it => `
+    <div class="sline">${it.name} x${it.qty}${it.opts && it.opts.length ? `<span class="sopts">${it.opts.join('・')}</span>` : ''}</div>
+  `).join('');
+  document.getElementById('statusCard').innerHTML = `
+    <span class="status-badge ${meta.badgeClass}">${meta.badgeText}</span>
+    <div class="status-icon ${meta.spinning?'spinning':''}">${meta.icon}</div>
+    <div class="status-title">${meta.title}</div>
+    <div class="status-num">No. ${String(order.num).padStart(2,'0')}</div>
+    <div class="status-sub">${order.orderType === 'takeout' ? '🥡 外帶自取' : '🍽️ 內用'}・${order.customerName}</div>
+    <div class="status-items">
+      ${itemsHtml}
+      <div class="status-total"><span>總計</span><span>$${order.total}</span></div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;" id="newOrderBtn">🍳 我要再點一份</button>
+  `;
+  document.getElementById('newOrderBtn').onclick = () => {
+    sessionStorage.removeItem('trackedOrderId');
+    trackedOrder = null;
+    document.getElementById('statusView').style.display = 'none';
+    document.getElementById('orderingView').style.display = 'block';
+  };
+}
+
+socket.on('order_ready', (order) => {
+  if(trackedOrder && order.id === trackedOrder.id){
+    trackedOrder = order;
+    renderStatusCard();
+    playChime();
+  }
+});
+socket.on('order_paid', ({ order }) => {
+  if(trackedOrder && order.id === trackedOrder.id){
+    trackedOrder = order;
+    renderStatusCard();
+  }
+});
+socket.on('order_undone', ({ order }) => {
+  if(trackedOrder && order.id === trackedOrder.id){
+    trackedOrder = order;
+    renderStatusCard();
+  }
+});
+socket.on('order_cancelled', (order) => {
+  if(trackedOrder && order.id === trackedOrder.id){
+    trackedOrder = order;
+    renderStatusCard();
+  }
+});
+
+async function checkTrackedOrder(){
+  const savedId = sessionStorage.getItem('trackedOrderId');
+  if(!savedId) return false;
+  try{
+    const res = await fetch(`/api/orders/${savedId}`);
+    if(!res.ok){ sessionStorage.removeItem('trackedOrderId'); return false; }
+    const order = await res.json();
+    showOrderStatus(order);
+    return true;
+  } catch(e){
+    return false;
+  }
+}
+
+(async () => {
+  const isTracking = await checkTrackedOrder();
+  if(!isTracking) loadMenu();
+})();
 </script>
 </body>
 </html>
