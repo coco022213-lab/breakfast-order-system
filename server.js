@@ -159,7 +159,12 @@ app.get('/api/admin/stats', requireAdmin, (req, res) => {
   });
 });
 
-app.post('/api/orders', (req, res) => {
+// 讓客人可以查詢自己訂單目前的狀態（不需要密碼，訂單編號是隨機長字串，別人猜不到）
+app.get('/api/orders/:id', (req, res) => {
+  const order = db.orders.find((o) => o.id === req.params.id);
+  if (!order) return res.status(404).json({ error: '找不到訂單' });
+  res.json(order);
+});
   const { customerName, items, orderType } = req.body;
   if (!customerName || !items || !items.length) {
     return res.status(400).json({ error: '缺少姓名或餐點' });
@@ -179,6 +184,16 @@ app.post('/api/orders', (req, res) => {
   db.orders.push(order);
   saveData();
   io.emit('new_order', order);
+  res.json(order);
+});
+
+// 通知外帶客人：餐點已經完成，可以來取餐了（還沒收款，等客人來再按「完成並收款」）
+app.post('/api/orders/:id/ready', (req, res) => {
+  const order = db.orders.find((o) => o.id === req.params.id);
+  if (!order) return res.status(404).json({ error: '找不到訂單' });
+  order.status = 'ready';
+  saveData();
+  io.emit('order_ready', order);
   res.json(order);
 });
 
