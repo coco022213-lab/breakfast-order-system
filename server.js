@@ -165,6 +165,8 @@ app.get('/api/orders/:id', (req, res) => {
   if (!order) return res.status(404).json({ error: '找不到訂單' });
   res.json(order);
 });
+
+app.post('/api/orders', (req, res) => {
   const { customerName, items, orderType } = req.body;
   if (!customerName || !items || !items.length) {
     return res.status(400).json({ error: '缺少姓名或餐點' });
