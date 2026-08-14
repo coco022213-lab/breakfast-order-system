@@ -37,6 +37,14 @@
   }
   .ticket.is-ready{ box-shadow:0 0 0 3px var(--scallion), var(--shadow); }
   .ready-btn{ background:var(--yolk); color:var(--ink); }
+  .phone-link{
+    display:inline-flex; align-items:center; gap:6px; margin-top:8px; background:var(--scallion);
+    color:var(--white); text-decoration:none; font-weight:900; font-size:15px; padding:6px 14px; border-radius:100px;
+  }
+  .note-line{
+    background:rgba(240,165,0,0.15); border-left:4px solid var(--yolk); border-radius:6px;
+    padding:8px 10px; margin-bottom:14px; font-size:14px; font-weight:700; color:#8A5A00;
+  }
   .perforation{
     height:14px; background-color:var(--ink);
     background-image:
@@ -228,6 +236,7 @@ function renderTickets(){
           <div class="cust">${o.customerName}</div>
           <span class="type-badge ${o.orderType==='takeout'?'takeout':'dine-in'}">${o.orderType==='takeout'?'🥡 外帶':'🍽️ 內用'}</span>
           ${isReady ? '<span class="ready-badge">🔔 已通知取餐</span>' : ''}
+          ${o.customerPhone ? `<div><a class="phone-link" href="tel:${o.customerPhone}">📞 ${o.customerPhone}</a></div>` : ''}
         </div>
         <div style="text-align:right;">
           <span class="time">${time}</span>
@@ -236,6 +245,7 @@ function renderTickets(){
       </div>
       <div class="perforation"></div>
       <div class="ticket-body">
+        ${o.note ? `<div class="note-line">📝 ${o.note}</div>` : ''}
         ${lines}
         <div class="ticket-total"><span class="label">應收金額</span><span class="amount">$${o.total}</span></div>
         <div class="ticket-actions">

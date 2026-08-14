@@ -17,6 +17,11 @@
     font-size:15px; font-family:inherit;
   }
   .name-bar input:focus{ outline:none; border-color:var(--yolk); }
+  .name-bar textarea{
+    width:100%; border:2px solid var(--paper-deep); border-radius:10px; padding:10px 12px;
+    font-size:14px; font-family:inherit; resize:none;
+  }
+  .name-bar textarea:focus{ outline:none; border-color:var(--yolk); }
   .type-row{ display:flex; gap:8px; }
   .type-row .pill{ flex:1; text-align:center; }
 
@@ -128,6 +133,8 @@
     <button class="pill" id="typeTakeout" data-type="takeout">🥡 外帶自取</button>
   </div>
   <input id="customerName" type="text" placeholder="請輸入姓名或桌號，方便叫號取餐" maxlength="12">
+  <input id="customerPhone" type="tel" placeholder="電話號碼（選填，方便通知取餐）" maxlength="15" style="display:none;">
+  <textarea id="orderNote" placeholder="備註（選填，例如：不要洋蔥）" rows="2" maxlength="80"></textarea>
 </div>
 
 <div class="cat-tabs" id="catTabs"></div>
@@ -167,6 +174,7 @@ function setOrderType(type){
   document.getElementById('typeDineIn').classList.toggle('selected', type === 'dine-in');
   document.getElementById('typeTakeout').classList.toggle('selected', type === 'takeout');
   document.getElementById('customerName').placeholder = type === 'dine-in' ? '請輸入桌號或姓名' : '請輸入姓名，方便叫號取餐';
+  document.getElementById('customerPhone').style.display = type === 'takeout' ? 'block' : 'none';
 }
 
 async function loadMenu(){
@@ -327,13 +335,20 @@ async function submitOrder(){
   }
   const res = await fetch('/api/orders', {
     method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ customerName: name, items: cart, orderType })
+    body: JSON.stringify({
+      customerName: name,
+      customerPhone: document.getElementById('customerPhone').value.trim(),
+      note: document.getElementById('orderNote').value.trim(),
+      items: cart,
+      orderType
+    })
   });
   if(!res.ok){ showToast('送出失敗，請再試一次'); return; }
   const order = await res.json();
   unlockAudio();
   cart = [];
   updateCartBar();
+  document.getElementById('orderNote').value = '';
   document.getElementById('cartOverlay').classList.remove('active');
   sessionStorage.setItem('trackedOrderId', order.id);
   rememberOrderId(order.id);
@@ -409,8 +424,9 @@ function renderStatusCard(){
     <div class="status-icon ${meta.spinning?'spinning':''}">${meta.icon}</div>
     <div class="status-title">${meta.title}</div>
     <div class="status-num">No. ${String(order.num).padStart(2,'0')}</div>
-    <div class="status-sub">${order.orderType === 'takeout' ? '🥡 外帶自取' : '🍽️ 內用'}・${order.customerName}</div>
+    <div class="status-sub">${order.orderType === 'takeout' ? '🥡 外帶自取' : '🍽️ 內用'}・${order.customerName}${order.customerPhone ? '・'+order.customerPhone : ''}</div>
     <div class="status-items">
+      ${order.note ? `<div class="sline" style="color:var(--chili-deep);">📝 ${order.note}</div>` : ''}
       ${itemsHtml}
       <div class="status-total"><span>總計</span><span>$${order.total}</span></div>
     </div>
