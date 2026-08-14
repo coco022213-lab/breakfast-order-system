@@ -167,7 +167,7 @@ app.get('/api/orders/:id', (req, res) => {
 });
 
 app.post('/api/orders', (req, res) => {
-  const { customerName, items, orderType } = req.body;
+  const { customerName, items, orderType, customerPhone, note } = req.body;
   if (!customerName || !items || !items.length) {
     return res.status(400).json({ error: '缺少姓名或餐點' });
   }
@@ -177,6 +177,8 @@ app.post('/api/orders', (req, res) => {
     id: newId(),
     num: db.orderCounter,
     customerName,
+    customerPhone: (customerPhone || '').trim(),
+    note: (note || '').trim(),
     orderType: orderType === 'takeout' ? 'takeout' : 'dine-in',
     items,
     total,
