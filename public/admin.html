@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>菜單管理・荷香早餐店</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<style>
+  .wrap{ padding:20px 24px 60px; max-width:760px; margin:0 auto; }
+  .login-wrap{ max-width:340px; margin:80px auto; text-align:center; }
+  .login-wrap input{ width:100%; padding:14px; font-size:22px; text-align:center; letter-spacing:6px;
+    border:2px solid var(--paper-deep); border-radius:12px; margin:16px 0; font-family:inherit; }
+  .cat-block{ margin-bottom:26px; }
+  .cat-block h2{ font-size:16px; font-weight:900; margin:0 0 10px; }
+  .item-row{
+    background:var(--white); border-radius:12px; padding:12px 14px; margin-bottom:8px;
+    display:flex; align-items:center; gap:10px; box-shadow:var(--shadow); flex-wrap:wrap;
+  }
+  .item-row.editing{ border-radius:12px 12px 0 0; margin-bottom:0; }
+  .item-row .emoji{ font-size:22px; }
+  .item-row .name{ font-weight:700; font-size:14px; flex:1; min-width:80px; }
+  .item-row input[type=number]{
+    width:80px; padding:8px; border:2px solid var(--paper-deep); border-radius:8px; font-family:inherit; font-size:14px;
+  }
+  .toggle{
+    display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft); cursor:pointer;
+  }
+  .toggle input{ width:16px; height:16px; }
+  .row-actions{ display:flex; gap:6px; }
+  .row-actions button{ padding:8px 12px; font-size:12px; border-radius:8px; }
+  .row-actions button.editing-active{ background:var(--scallion); border-color:var(--scallion); color:var(--white); }
+  .save-note{ font-size:11px; color:var(--scallion); font-weight:700; opacity:0; transition:.3s; }
+  .save-note.show{ opacity:1; }
+
+  .edit-panel{
+    background:var(--white); border-radius:0 0 12px 12px; padding:16px;
+    box-shadow:var(--shadow); margin-bottom:8px; border-top:2px dashed var(--paper-deep);
+    animation:expand .18s ease;
+  }
+  @keyframes expand{ from{ opacity:0; transform:translateY(-6px);} to{ opacity:1; transform:translateY(0);} }
+
+  .cat-emoji-box{
+    background:var(--white); border-radius:14px; padding:16px; box-shadow:var(--shadow); margin-bottom:20px;
+  }
+  .cat-emoji-box h2{ font-size:15px; font-weight:900; margin:0 0 10px; }
+  .cat-emoji-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .cat-emoji-row .cname{ font-weight:700; font-size:13px; flex:1; }
+  .cat-emoji-row input{
+    width:56px; text-align:center; padding:8px; border:2px solid var(--paper-deep); border-radius:8px;
+    font-family:inherit; font-size:16px;
+  }
+  .cat-emoji-row button{ padding:8px 14px; font-size:12px; border-radius:8px; }
+
+  .add-box{
+    background:var(--white); border-radius:14px; padding:18px; box-shadow:var(--shadow); margin-top:30px;
+  }
+  .add-box h2{ font-size:16px; font-weight:900; margin:0 0 14px; }
+  .field{ margin-bottom:12px; }
+  .field label{ display:block; font-size:12px; font-weight:700; color:var(--ink-soft); margin-bottom:5px; }
+  .field input, .field textarea, .field select{
+    width:100%; padding:10px 12px; border:2px solid var(--paper-deep); border-radius:8px; font-family:inherit; font-size:14px;
+  }
+  .field-row{ display:flex; gap:10px; }
+  .field-row .field{ flex:1; }
+  .hint{ font-size:11px; color:var(--ink-soft); margin-top:4px; }
+</style>
+</head>
+<body>
+
+<div id="loginScreen" class="login-wrap">
+  <h1>🔒 菜單管理</h1>
+  <p style="color:var(--ink-soft); font-size:13px;">請輸入管理密碼</p>
+  <input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="****">
+  <button class="btn btn-primary" style="width:100%;" id="loginBtn">進入</button>
+  <p id="loginError" style="color:var(--chili); font-size:13px; display:none;">密碼錯誤，請再試一次</p>
+</div>
+
+<div id="adminScreen" style="display:none;">
+  <div class="topbar">
+    <div><h1>🍳 菜單管理</h1><div class="sub">改價格、上下架、新增品項</div></div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <a href="/kitchen.html" style="color:var(--paper); text-decoration:none; font-size:13px; background:rgba(255,255,255,0.12); padding:8px 14px; border-radius:100px;">👵 出餐看板</a>
+      <a href="/qrcode.html" style="color:var(--paper); text-decoration:none; font-size:13px; background:rgba(255,255,255,0.12); padding:8px 14px; border-radius:100px;">📱 QR Code</a>
+      <a href="/dashboard.html" style="color:var(--paper); text-decoration:none; font-size:13px; background:rgba(255,255,255,0.12); padding:8px 14px; border-radius:100px;">📊 營業儀表板</a>
+      <span class="save-note" id="saveNote">✓ 已儲存</span>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="cat-emoji-box">
+      <h2>🎨 分類圖示</h2>
+      <div id="catEmojiList"></div>
+    </div>
+  </div>
+  <div class="wrap" id="menuWrap"></div>
+
+  <div class="wrap">
+    <div class="add-box">
+      <h2>＋ 新增品項</h2>
+      <div class="field-row">
+        <div class="field"><label>分類</label><input id="newCat" placeholder="例：蛋餅"></div>
+        <div class="field"><label>基本價格</label><input id="newPrice" type="number" placeholder="30"></div>
+      </div>
+      <div class="field">
+        <label>品名</label><input id="newName" placeholder="例：起司蛋餅">
+      </div>
+      <div class="field">
+        <label>客製化選項（進階，可留空）</label>
+        <textarea id="newGroups" rows="4" placeholder="辣度:不辣,小辣,大辣&#10;加料(可複選):起司+10,培根+15"></textarea>
+        <div class="hint">每行一組，格式「名稱:選項1,選項2:選項3+加價」。<br>預設是「單選」(客人一定要選一個，像辣度、甜度)；如果是可以自由加、不加、甚至同時加好幾樣的(像加料)，在名稱後面加「(可複選)」，例如「加料(可複選):起司+10,培根+15」。</div>
+      </div>
+      <div class="hint" style="margin-bottom:14px;">💡 圖示不用在這裡設定，是跟著「分類」走的，去上面「分類圖示」那一區改就好。如果是全新的分類，新增後記得去那邊補一個圖示。</div>
+      <button class="btn btn-primary" style="width:100%;" id="addItemBtn">新增品項</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let PIN = sessionStorage.getItem('admin_pin') || '';
+let MENU = [];
+let editingId = null;
+let copyingId = null;
+
+async function tryLogin(pin){
+  const res = await fetch('/api/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pin}) });
+  if(res.ok){
+    PIN = pin;
+    sessionStorage.setItem('admin_pin', pin);
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminScreen').style.display = 'block';
+    loadMenu();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+  }
+}
+document.getElementById('loginBtn').onclick = () => tryLogin(document.getElementById('pinInput').value.trim());
+document.getElementById('pinInput').addEventListener('keydown', e => { if(e.key==='Enter') tryLogin(e.target.value.trim()); });
+if(PIN) tryLogin(PIN);
+
+async function loadMenu(){
+  const res = await fetch('/api/menu?all=1');
+  MENU = await res.json();
+  renderCatEmojiList();
+  renderMenu();
+}
+
+function renderCatEmojiList(){
+  const wrap = document.getElementById('catEmojiList');
+  const categories = [...new Set(MENU.map(i => i.category))];
+  wrap.innerHTML = categories.map(cat => {
+    const emoji = (MENU.find(i => i.category === cat) || {}).emoji || '🍽️';
+    return `
+      <div class="cat-emoji-row">
+        <input value="${emoji}" data-cat="${cat}" maxlength="4">
+        <span class="cname">${cat}</span>
+        <button class="btn btn-primary" data-save-cat-emoji="${cat}">套用</button>
+      </div>`;
+  }).join('');
+  wrap.querySelectorAll('[data-save-cat-emoji]').forEach(btn => {
+    btn.onclick = async () => {
+      const cat = btn.dataset.saveCatEmoji;
+      const input = wrap.querySelector(`input[data-cat="${cat}"]`);
+      const emoji = input.value.trim();
+      if(!emoji){ showToast('請輸入一個圖示'); return; }
+      await fetch('/api/admin/category-emoji', {
+        method:'PUT', headers:{'Content-Type':'application/json','x-admin-pin':PIN},
+        body: JSON.stringify({ category: cat, emoji })
+      });
+      showToast(`「${cat}」分類的圖示已更新`);
+      loadMenu();
+    };
+  });
+}
+
+function renderMenu(){
+  const wrap = document.getElementById('menuWrap');
+  const categories = [...new Set(MENU.map(i => i.category))];
+  wrap.innerHTML = '';
+  categories.forEach(cat => {
+    const block = document.createElement('div');
+    block.className = 'cat-block';
+    block.innerHTML = `<h2>${cat}</h2>`;
+    MENU.filter(i => i.category === cat).forEach(item => {
+      const isEditing = editingId === item.id;
+      const isCopying = copyingId === item.id;
+      const row = document.createElement('div');
+      row.className = 'item-row' + ((isEditing||isCopying) ? ' editing' : '');
+      row.innerHTML = `
+        <span class="emoji">${item.emoji||'🍽️'}</span>
+        <span class="name">${item.name}</span>
+        <span>$</span><input type="number" value="${item.price}" data-id="${item.id}" data-field="price">
+        <label class="toggle"><input type="checkbox" ${item.active!==false?'checked':''} data-id="${item.id}" data-field="active">上架中</label>
+        <div class="row-actions">
+          <button class="btn btn-outline ${isEditing?'editing-active':''}" data-edit="${item.id}">${isEditing?'關閉編輯':'編輯'}</button>
+          <button class="btn btn-outline ${isCopying?'editing-active':''}" data-copy="${item.id}">${isCopying?'關閉複製':'複製'}</button>
+          <button class="btn btn-outline" data-delete="${item.id}">刪除</button>
+        </div>
+      `;
+      block.appendChild(row);
+
+      if(isEditing){
+        const panel = document.createElement('div');
+        panel.className = 'edit-panel';
+        panel.innerHTML = `
+          <div class="field-row">
+            <div class="field"><label>分類</label><input id="editCat" value="${item.category}"></div>
+            <div class="field"><label>基本價格</label><input id="editPrice" type="number" value="${item.price}"></div>
+          </div>
+          <div class="field">
+            <label>品名</label><input id="editName" value="${item.name}">
+          </div>
+          <div class="field">
+            <label>客製化選項</label>
+            <textarea id="editGroups" rows="4">${groupsToText(item.groups)}</textarea>
+            <div class="hint">格式「名稱:選項1,選項2」。單選是預設；名稱後面加「(可複選)」變成可以自由勾選多個。</div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button class="btn btn-primary" style="flex:1;" id="saveEditBtn">儲存修改</button>
+            <button class="btn btn-outline" id="cancelInlineEditBtn">取消</button>
+          </div>
+        `;
+        block.appendChild(panel);
+      }
+
+      if(isCopying){
+        const panel = document.createElement('div');
+        panel.className = 'edit-panel';
+        panel.innerHTML = `
+          <div class="hint" style="margin-bottom:10px;">複製自「${item.name}」，改好內容後按下方新增，會變成一個全新的品項。</div>
+          <div class="field-row">
+            <div class="field"><label>分類</label><input id="copyCat" value="${item.category}"></div>
+            <div class="field"><label>基本價格</label><input id="copyPrice" type="number" value="${item.price}"></div>
+          </div>
+          <div class="field">
+            <label>品名</label><input id="copyName" value="${item.name}">
+          </div>
+          <div class="field">
+            <label>客製化選項</label>
+            <textarea id="copyGroups" rows="4">${groupsToText(item.groups)}</textarea>
+            <div class="hint">格式「名稱:選項1,選項2」。單選是預設；名稱後面加「(可複選)」變成可以自由勾選多個。</div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button class="btn btn-primary" style="flex:1;" id="saveCopyBtn">新增為新品項</button>
+            <button class="btn btn-outline" id="cancelInlineCopyBtn">取消</button>
+          </div>
+        `;
+        block.appendChild(panel);
+      }
+    });
+    wrap.appendChild(block);
+  });
+
+  wrap.querySelectorAll('input[data-field="price"]').forEach(inp => {
+    inp.addEventListener('change', () => updateItem(inp.dataset.id, { price: Number(inp.value) }));
+  });
+  wrap.querySelectorAll('input[data-field="active"]').forEach(inp => {
+    inp.addEventListener('change', () => updateItem(inp.dataset.id, { active: inp.checked }));
+  });
+  wrap.querySelectorAll('[data-edit]').forEach(btn => {
+    btn.onclick = () => {
+      copyingId = null;
+      editingId = editingId === btn.dataset.edit ? null : btn.dataset.edit;
+      renderMenu();
+    };
+  });
+  wrap.querySelectorAll('[data-copy]').forEach(btn => {
+    btn.onclick = () => {
+      editingId = null;
+      copyingId = copyingId === btn.dataset.copy ? null : btn.dataset.copy;
+      renderMenu();
+    };
+  });
+  wrap.querySelectorAll('[data-delete]').forEach(btn => {
+    btn.onclick = async () => {
+      if(!confirm('確定刪除這個品項嗎？')) return;
+      await fetch(`/api/admin/menu/${btn.dataset.delete}`, { method:'DELETE', headers:{'x-admin-pin':PIN} });
+      showToast('已刪除');
+      if(editingId === btn.dataset.delete) editingId = null;
+      if(copyingId === btn.dataset.delete) copyingId = null;
+      loadMenu();
+    };
+  });
+
+  const saveEditBtn = document.getElementById('saveEditBtn');
+  if(saveEditBtn){
+    saveEditBtn.onclick = async () => {
+      const category = document.getElementById('editCat').value.trim();
+      const name = document.getElementById('editName').value.trim();
+      const price = Number(document.getElementById('editPrice').value);
+      const groups = parseGroups(document.getElementById('editGroups').value);
+      if(!category || !name || !price){
+        showToast('請填寫分類、品名、價格');
+        return;
+      }
+      await fetch(`/api/admin/menu/${editingId}`, {
+        method:'PUT', headers:{'Content-Type':'application/json','x-admin-pin':PIN},
+        body: JSON.stringify({ category, name, price, groups })
+      });
+      showToast('已儲存修改');
+      editingId = null;
+      loadMenu();
+    };
+  }
+  const cancelInlineEditBtn = document.getElementById('cancelInlineEditBtn');
+  if(cancelInlineEditBtn){
+    cancelInlineEditBtn.onclick = () => { editingId = null; renderMenu(); };
+  }
+
+  const saveCopyBtn = document.getElementById('saveCopyBtn');
+  if(saveCopyBtn){
+    saveCopyBtn.onclick = async () => {
+      const category = document.getElementById('copyCat').value.trim();
+      const name = document.getElementById('copyName').value.trim();
+      const price = Number(document.getElementById('copyPrice').value);
+      const groups = parseGroups(document.getElementById('copyGroups').value);
+      if(!category || !name || !price){
+        showToast('請填寫分類、品名、價格');
+        return;
+      }
+      await fetch('/api/admin/menu', {
+        method:'POST', headers:{'Content-Type':'application/json','x-admin-pin':PIN},
+        body: JSON.stringify({ category, name, price, groups })
+      });
+      showToast('已新增品項');
+      copyingId = null;
+      loadMenu();
+    };
+  }
+  const cancelInlineCopyBtn = document.getElementById('cancelInlineCopyBtn');
+  if(cancelInlineCopyBtn){
+    cancelInlineCopyBtn.onclick = () => { copyingId = null; renderMenu(); };
+  }
+}
+
+async function updateItem(id, patch){
+  await fetch(`/api/admin/menu/${id}`, {
+    method:'PUT', headers:{'Content-Type':'application/json','x-admin-pin':PIN}, body: JSON.stringify(patch)
+  });
+  showSaveNote();
+}
+
+function parseGroups(text){
+  const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+  return lines.map((line, idx) => {
+    let [label, optsStr] = line.split(':');
+    label = (label||'選項').trim();
+    let type = 'single';
+    if(/[（(]可複選[）)]/.test(label)){
+      type = 'multi';
+      label = label.replace(/[（(]可複選[）)]/,'').trim();
+    }
+    const options = (optsStr||'').split(',').map(s=>s.trim()).filter(Boolean).map(opt => {
+      const m = opt.match(/^(.+?)\+(\d+)$/);
+      if(m) return { v: m[1].trim(), extra: Number(m[2]) };
+      return { v: opt, extra: 0 };
+    });
+    return { key: 'g'+idx, label, type, default: type === 'single' ? options[0]?.v : undefined, options };
+  });
+}
+
+function groupsToText(groups){
+  return (groups||[]).map(g => {
+    const label = g.type === 'multi' ? `${g.label}(可複選)` : g.label;
+    const opts = (g.options||[]).map(o => {
+      if(/\+\d+$/.test(o.v)) return o.v;
+      return o.extra ? `${o.v}+${o.extra}` : o.v;
+    }).join(',');
+    return `${label}:${opts}`;
+  }).join('\n');
+}
+
+document.getElementById('addItemBtn').onclick = async () => {
+  const category = document.getElementById('newCat').value.trim();
+  const name = document.getElementById('newName').value.trim();
+  const price = Number(document.getElementById('newPrice').value);
+  const groups = parseGroups(document.getElementById('newGroups').value);
+  if(!category || !name || !price){
+    showToast('請填寫分類、品名、價格');
+    return;
+  }
+  await fetch('/api/admin/menu', {
+    method:'POST', headers:{'Content-Type':'application/json','x-admin-pin':PIN},
+    body: JSON.stringify({ category, name, price, groups })
+  });
+  ['newCat','newName','newPrice','newGroups'].forEach(id => document.getElementById(id).value='');
+  showToast('已新增品項');
+  loadMenu();
+};
+
+function showSaveNote(){
+  const n = document.getElementById('saveNote');
+  n.classList.add('show');
+  setTimeout(()=>n.classList.remove('show'), 1500);
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+</script>
+</body>
+</html>
