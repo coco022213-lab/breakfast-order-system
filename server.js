@@ -191,6 +191,28 @@ app.post('/api/orders', (req, res) => {
   res.json(order);
 });
 
+// 客人在訂單還沒開始製作前，可以自己加點/修改內容（不需要密碼，只有自己知道訂單編號）
+app.put('/api/orders/:id', (req, res) => {
+  const order = db.orders.find((o) => o.id === req.params.id);
+  if (!order) return res.status(404).json({ error: '找不到訂單' });
+  if (order.status !== 'pending') {
+    return res.status(409).json({ error: '這筆訂單已經開始製作或完成了，沒辦法再修改，請直接跟店家反應' });
+  }
+  const { items, customerName, customerPhone, note, orderType } = req.body;
+  if (!items || !items.length) {
+    return res.status(400).json({ error: '訂單至少要有一項餐點' });
+  }
+  order.items = items;
+  order.total = items.reduce((s, it) => s + it.unitPrice * it.qty, 0);
+  if (customerName) order.customerName = customerName;
+  order.customerPhone = (customerPhone || '').trim();
+  order.note = (note || '').trim();
+  order.orderType = orderType === 'takeout' ? 'takeout' : 'dine-in';
+  saveData();
+  io.emit('order_updated', order);
+  res.json(order);
+});
+
 // 通知外帶客人：餐點已經完成，可以來取餐了（還沒收款，等客人來再按「完成並收款」）
 app.post('/api/orders/:id/ready', (req, res) => {
   const order = db.orders.find((o) => o.id === req.params.id);
