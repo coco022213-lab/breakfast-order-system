@@ -12,8 +12,13 @@
   .login-wrap{ max-width:340px; margin:80px auto; text-align:center; }
   .login-wrap input{ width:100%; padding:14px; font-size:22px; text-align:center; letter-spacing:6px;
     border:2px solid var(--paper-deep); border-radius:12px; margin:16px 0; font-family:inherit; }
-  .cat-block{ margin-bottom:26px; }
-  .cat-block h2{ font-size:16px; font-weight:900; margin:0 0 10px; }
+
+  .cat-tabs-row{ display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .cat-tabs{ display:flex; gap:8px; overflow-x:auto; flex:1; padding-bottom:4px; }
+  .cat-tabs .pill{ white-space:nowrap; flex:none; }
+  .cat-tabs .pill .cnt{ opacity:.65; font-weight:500; margin-left:3px; }
+  .add-item-btn{ flex:none; }
+
   .item-row{
     background:var(--white); border-radius:12px; padding:12px 14px; margin-bottom:8px;
     display:flex; align-items:center; gap:10px; box-shadow:var(--shadow); flex-wrap:wrap;
@@ -35,10 +40,11 @@
   .save-note.show{ opacity:1; }
 
   .edit-panel{
-    background:var(--white); border-radius:0 0 12px 12px; padding:16px;
-    box-shadow:var(--shadow); margin-bottom:8px; border-top:2px dashed var(--paper-deep);
+    background:var(--white); border-radius:12px; padding:16px;
+    box-shadow:var(--shadow); margin-bottom:8px;
     animation:expand .18s ease;
   }
+  .edit-panel.attached{ border-radius:0 0 12px 12px; margin-top:-8px; border-top:2px dashed var(--paper-deep); }
   @keyframes expand{ from{ opacity:0; transform:translateY(-6px);} to{ opacity:1; transform:translateY(0);} }
 
   .cat-emoji-box{
@@ -53,10 +59,6 @@
   }
   .cat-emoji-row button{ padding:8px 14px; font-size:12px; border-radius:8px; }
 
-  .add-box{
-    background:var(--white); border-radius:14px; padding:18px; box-shadow:var(--shadow); margin-top:30px;
-  }
-  .add-box h2{ font-size:16px; font-weight:900; margin:0 0 14px; }
   .field{ margin-bottom:12px; }
   .field label{ display:block; font-size:12px; font-weight:700; color:var(--ink-soft); margin-bottom:5px; }
   .field input, .field textarea, .field select{
@@ -65,6 +67,8 @@
   .field-row{ display:flex; gap:10px; }
   .field-row .field{ flex:1; }
   .hint{ font-size:11px; color:var(--ink-soft); margin-top:4px; }
+
+  .empty-cat{ text-align:center; padding:40px 20px; color:var(--ink-soft); font-size:14px; }
 </style>
 </head>
 <body>
@@ -92,27 +96,14 @@
       <h2>🎨 分類圖示</h2>
       <div id="catEmojiList"></div>
     </div>
-  </div>
-  <div class="wrap" id="menuWrap"></div>
 
-  <div class="wrap">
-    <div class="add-box">
-      <h2>＋ 新增品項</h2>
-      <div class="field-row">
-        <div class="field"><label>分類</label><input id="newCat" placeholder="例：蛋餅"></div>
-        <div class="field"><label>基本價格</label><input id="newPrice" type="number" placeholder="30"></div>
-      </div>
-      <div class="field">
-        <label>品名</label><input id="newName" placeholder="例：起司蛋餅">
-      </div>
-      <div class="field">
-        <label>客製化選項（進階，可留空）</label>
-        <textarea id="newGroups" rows="4" placeholder="辣度:不辣,小辣,大辣&#10;加料(可複選):起司+10,培根+15"></textarea>
-        <div class="hint">每行一組，格式「名稱:選項1,選項2:選項3+加價」。<br>預設是「單選」(客人一定要選一個，像辣度、甜度)；如果是可以自由加、不加、甚至同時加好幾樣的(像加料)，在名稱後面加「(可複選)」，例如「加料(可複選):起司+10,培根+15」。</div>
-      </div>
-      <div class="hint" style="margin-bottom:14px;">💡 圖示不用在這裡設定，是跟著「分類」走的，去上面「分類圖示」那一區改就好。如果是全新的分類，新增後記得去那邊補一個圖示。</div>
-      <button class="btn btn-primary" style="width:100%;" id="addItemBtn">新增品項</button>
+    <div class="cat-tabs-row">
+      <div class="cat-tabs" id="catTabs"></div>
+      <button class="btn btn-primary add-item-btn" id="toggleAddBtn">＋ 新增品項</button>
     </div>
+
+    <div id="addPanelWrap"></div>
+    <div id="menuWrap"></div>
   </div>
 </div>
 
@@ -123,6 +114,8 @@ let PIN = sessionStorage.getItem('admin_pin') || '';
 let MENU = [];
 let editingId = null;
 let copyingId = null;
+let activeCat = '';
+let addingNew = false;
 
 async function tryLogin(pin){
   const res = await fetch('/api/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pin}) });
@@ -143,7 +136,13 @@ if(PIN) tryLogin(PIN);
 async function loadMenu(){
   const res = await fetch('/api/menu?all=1');
   MENU = await res.json();
+  const categories = [...new Set(MENU.map(i => i.category))];
+  if(!activeCat || !categories.includes(activeCat)){
+    activeCat = categories[0] || '';
+  }
   renderCatEmojiList();
+  renderCatTabs();
+  renderAddPanel();
   renderMenu();
 }
 
@@ -175,82 +174,156 @@ function renderCatEmojiList(){
   });
 }
 
+function renderCatTabs(){
+  const wrap = document.getElementById('catTabs');
+  const categories = [...new Set(MENU.map(i => i.category))];
+  wrap.innerHTML = categories.map(cat => {
+    const count = MENU.filter(i => i.category === cat).length;
+    return `<button class="pill ${cat===activeCat?'selected':''}" data-cat-tab="${cat}">${cat}<span class="cnt">(${count})</span></button>`;
+  }).join('');
+  wrap.querySelectorAll('[data-cat-tab]').forEach(btn => {
+    btn.onclick = () => {
+      activeCat = btn.dataset.catTab;
+      editingId = null; copyingId = null; addingNew = false;
+      renderCatTabs(); renderAddPanel(); renderMenu();
+    };
+  });
+}
+
+document.getElementById('toggleAddBtn').onclick = () => {
+  editingId = null; copyingId = null;
+  addingNew = !addingNew;
+  renderAddPanel();
+  renderMenu();
+  if(addingNew) document.getElementById('addPanelWrap').scrollIntoView({ behavior:'smooth', block:'start' });
+};
+
+function renderAddPanel(){
+  const wrap = document.getElementById('addPanelWrap');
+  document.getElementById('toggleAddBtn').classList.toggle('editing-active', addingNew);
+  if(!addingNew){ wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `
+    <div class="edit-panel">
+      <div class="field-row">
+        <div class="field"><label>分類</label><input id="newCat" value="${activeCat}" placeholder="例：蛋餅"></div>
+        <div class="field"><label>基本價格</label><input id="newPrice" type="number" placeholder="30"></div>
+      </div>
+      <div class="field">
+        <label>品名</label><input id="newName" placeholder="例：起司蛋餅">
+      </div>
+      <div class="field">
+        <label>客製化選項（進階，可留空）</label>
+        <textarea id="newGroups" rows="4" placeholder="辣度:不辣,小辣,大辣&#10;加料(可複選):起司+10,培根+15"></textarea>
+        <div class="hint">每行一組，格式「名稱:選項1,選項2:選項3+加價」。<br>預設是「單選」(客人一定要選一個，像辣度、甜度)；如果是可以自由加、不加、甚至同時加好幾樣的(像加料)，在名稱後面加「(可複選)」，例如「加料(可複選):起司+10,培根+15」。</div>
+      </div>
+      <div class="hint" style="margin-bottom:14px;">💡 圖示不用在這裡設定，是跟著「分類」走的，去上面「分類圖示」那一區改就好。如果是全新的分類，新增後記得去那邊補一個圖示。輸入一個還沒出現過的分類名稱，就會自動變成新分類。</div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-primary" style="flex:1;" id="addItemBtn">新增品項</button>
+        <button class="btn btn-outline" id="cancelAddBtn">取消</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('cancelAddBtn').onclick = () => {
+    addingNew = false;
+    renderAddPanel();
+    renderMenu();
+  };
+  document.getElementById('addItemBtn').onclick = async () => {
+    const category = document.getElementById('newCat').value.trim();
+    const name = document.getElementById('newName').value.trim();
+    const price = Number(document.getElementById('newPrice').value);
+    const groups = parseGroups(document.getElementById('newGroups').value);
+    if(!category || !name || !price){
+      showToast('請填寫分類、品名、價格');
+      return;
+    }
+    await fetch('/api/admin/menu', {
+      method:'POST', headers:{'Content-Type':'application/json','x-admin-pin':PIN},
+      body: JSON.stringify({ category, name, price, groups })
+    });
+    activeCat = category;
+    addingNew = false;
+    showToast('已新增品項');
+    loadMenu();
+  };
+}
+
 function renderMenu(){
   const wrap = document.getElementById('menuWrap');
-  const categories = [...new Set(MENU.map(i => i.category))];
+  const items = MENU.filter(i => i.category === activeCat);
   wrap.innerHTML = '';
-  categories.forEach(cat => {
-    const block = document.createElement('div');
-    block.className = 'cat-block';
-    block.innerHTML = `<h2>${cat}</h2>`;
-    MENU.filter(i => i.category === cat).forEach(item => {
-      const isEditing = editingId === item.id;
-      const isCopying = copyingId === item.id;
-      const row = document.createElement('div');
-      row.className = 'item-row' + ((isEditing||isCopying) ? ' editing' : '');
-      row.innerHTML = `
-        <span class="emoji">${item.emoji||'🍽️'}</span>
-        <span class="name">${item.name}</span>
-        <span>$</span><input type="number" value="${item.price}" data-id="${item.id}" data-field="price">
-        <label class="toggle"><input type="checkbox" ${item.active!==false?'checked':''} data-id="${item.id}" data-field="active">上架中</label>
-        <div class="row-actions">
-          <button class="btn btn-outline ${isEditing?'editing-active':''}" data-edit="${item.id}">${isEditing?'關閉編輯':'編輯'}</button>
-          <button class="btn btn-outline ${isCopying?'editing-active':''}" data-copy="${item.id}">${isCopying?'關閉複製':'複製'}</button>
-          <button class="btn btn-outline" data-delete="${item.id}">刪除</button>
+
+  if(items.length === 0){
+    wrap.innerHTML = '<div class="empty-cat">這個分類目前沒有品項，點上方「＋ 新增品項」加一個吧</div>';
+    return;
+  }
+
+  items.forEach(item => {
+    const isEditing = editingId === item.id;
+    const isCopying = copyingId === item.id;
+    const row = document.createElement('div');
+    row.className = 'item-row' + ((isEditing||isCopying) ? ' editing' : '');
+    row.innerHTML = `
+      <span class="emoji">${item.emoji||'🍽️'}</span>
+      <span class="name">${item.name}</span>
+      <span>$</span><input type="number" value="${item.price}" data-id="${item.id}" data-field="price">
+      <label class="toggle"><input type="checkbox" ${item.active!==false?'checked':''} data-id="${item.id}" data-field="active">上架中</label>
+      <div class="row-actions">
+        <button class="btn btn-outline ${isEditing?'editing-active':''}" data-edit="${item.id}">${isEditing?'關閉編輯':'編輯'}</button>
+        <button class="btn btn-outline ${isCopying?'editing-active':''}" data-copy="${item.id}">${isCopying?'關閉複製':'複製'}</button>
+        <button class="btn btn-outline" data-delete="${item.id}">刪除</button>
+      </div>
+    `;
+    wrap.appendChild(row);
+
+    if(isEditing){
+      const panel = document.createElement('div');
+      panel.className = 'edit-panel attached';
+      panel.innerHTML = `
+        <div class="field-row">
+          <div class="field"><label>分類</label><input id="editCat" value="${item.category}"></div>
+          <div class="field"><label>基本價格</label><input id="editPrice" type="number" value="${item.price}"></div>
+        </div>
+        <div class="field">
+          <label>品名</label><input id="editName" value="${item.name}">
+        </div>
+        <div class="field">
+          <label>客製化選項</label>
+          <textarea id="editGroups" rows="4">${groupsToText(item.groups)}</textarea>
+          <div class="hint">格式「名稱:選項1,選項2」。單選是預設；名稱後面加「(可複選)」變成可以自由勾選多個。</div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-primary" style="flex:1;" id="saveEditBtn">儲存修改</button>
+          <button class="btn btn-outline" id="cancelInlineEditBtn">取消</button>
         </div>
       `;
-      block.appendChild(row);
+      wrap.appendChild(panel);
+    }
 
-      if(isEditing){
-        const panel = document.createElement('div');
-        panel.className = 'edit-panel';
-        panel.innerHTML = `
-          <div class="field-row">
-            <div class="field"><label>分類</label><input id="editCat" value="${item.category}"></div>
-            <div class="field"><label>基本價格</label><input id="editPrice" type="number" value="${item.price}"></div>
-          </div>
-          <div class="field">
-            <label>品名</label><input id="editName" value="${item.name}">
-          </div>
-          <div class="field">
-            <label>客製化選項</label>
-            <textarea id="editGroups" rows="4">${groupsToText(item.groups)}</textarea>
-            <div class="hint">格式「名稱:選項1,選項2」。單選是預設；名稱後面加「(可複選)」變成可以自由勾選多個。</div>
-          </div>
-          <div style="display:flex; gap:10px;">
-            <button class="btn btn-primary" style="flex:1;" id="saveEditBtn">儲存修改</button>
-            <button class="btn btn-outline" id="cancelInlineEditBtn">取消</button>
-          </div>
-        `;
-        block.appendChild(panel);
-      }
-
-      if(isCopying){
-        const panel = document.createElement('div');
-        panel.className = 'edit-panel';
-        panel.innerHTML = `
-          <div class="hint" style="margin-bottom:10px;">複製自「${item.name}」，改好內容後按下方新增，會變成一個全新的品項。</div>
-          <div class="field-row">
-            <div class="field"><label>分類</label><input id="copyCat" value="${item.category}"></div>
-            <div class="field"><label>基本價格</label><input id="copyPrice" type="number" value="${item.price}"></div>
-          </div>
-          <div class="field">
-            <label>品名</label><input id="copyName" value="${item.name}">
-          </div>
-          <div class="field">
-            <label>客製化選項</label>
-            <textarea id="copyGroups" rows="4">${groupsToText(item.groups)}</textarea>
-            <div class="hint">格式「名稱:選項1,選項2」。單選是預設；名稱後面加「(可複選)」變成可以自由勾選多個。</div>
-          </div>
-          <div style="display:flex; gap:10px;">
-            <button class="btn btn-primary" style="flex:1;" id="saveCopyBtn">新增為新品項</button>
-            <button class="btn btn-outline" id="cancelInlineCopyBtn">取消</button>
-          </div>
-        `;
-        block.appendChild(panel);
-      }
-    });
-    wrap.appendChild(block);
+    if(isCopying){
+      const panel = document.createElement('div');
+      panel.className = 'edit-panel attached';
+      panel.innerHTML = `
+        <div class="hint" style="margin-bottom:10px;">複製自「${item.name}」，改好內容後按下方新增，會變成一個全新的品項。</div>
+        <div class="field-row">
+          <div class="field"><label>分類</label><input id="copyCat" value="${item.category}"></div>
+          <div class="field"><label>基本價格</label><input id="copyPrice" type="number" value="${item.price}"></div>
+        </div>
+        <div class="field">
+          <label>品名</label><input id="copyName" value="${item.name}">
+        </div>
+        <div class="field">
+          <label>客製化選項</label>
+          <textarea id="copyGroups" rows="4">${groupsToText(item.groups)}</textarea>
+          <div class="hint">格式「名稱:選項1,選項2」。單選是預設；名稱後面加「(可複選)」變成可以自由勾選多個。</div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-primary" style="flex:1;" id="saveCopyBtn">新增為新品項</button>
+          <button class="btn btn-outline" id="cancelInlineCopyBtn">取消</button>
+        </div>
+      `;
+      wrap.appendChild(panel);
+    }
   });
 
   wrap.querySelectorAll('input[data-field="price"]').forEach(inp => {
@@ -261,15 +334,17 @@ function renderMenu(){
   });
   wrap.querySelectorAll('[data-edit]').forEach(btn => {
     btn.onclick = () => {
-      copyingId = null;
+      copyingId = null; addingNew = false;
       editingId = editingId === btn.dataset.edit ? null : btn.dataset.edit;
+      renderAddPanel();
       renderMenu();
     };
   });
   wrap.querySelectorAll('[data-copy]').forEach(btn => {
     btn.onclick = () => {
-      editingId = null;
+      editingId = null; addingNew = false;
       copyingId = copyingId === btn.dataset.copy ? null : btn.dataset.copy;
+      renderAddPanel();
       renderMenu();
     };
   });
@@ -301,6 +376,7 @@ function renderMenu(){
       });
       showToast('已儲存修改');
       editingId = null;
+      activeCat = category;
       loadMenu();
     };
   }
@@ -326,6 +402,7 @@ function renderMenu(){
       });
       showToast('已新增品項');
       copyingId = null;
+      activeCat = category;
       loadMenu();
     };
   }
@@ -371,24 +448,6 @@ function groupsToText(groups){
     return `${label}:${opts}`;
   }).join('\n');
 }
-
-document.getElementById('addItemBtn').onclick = async () => {
-  const category = document.getElementById('newCat').value.trim();
-  const name = document.getElementById('newName').value.trim();
-  const price = Number(document.getElementById('newPrice').value);
-  const groups = parseGroups(document.getElementById('newGroups').value);
-  if(!category || !name || !price){
-    showToast('請填寫分類、品名、價格');
-    return;
-  }
-  await fetch('/api/admin/menu', {
-    method:'POST', headers:{'Content-Type':'application/json','x-admin-pin':PIN},
-    body: JSON.stringify({ category, name, price, groups })
-  });
-  ['newCat','newName','newPrice','newGroups'].forEach(id => document.getElementById(id).value='');
-  showToast('已新增品項');
-  loadMenu();
-};
 
 function showSaveNote(){
   const n = document.getElementById('saveNote');
