@@ -195,8 +195,8 @@ app.post('/api/orders', (req, res) => {
 app.put('/api/orders/:id', (req, res) => {
   const order = db.orders.find((o) => o.id === req.params.id);
   if (!order) return res.status(404).json({ error: '找不到訂單' });
-  if (order.status !== 'pending') {
-    return res.status(409).json({ error: '這筆訂單已經開始製作或完成了，沒辦法再修改，請直接跟店家反應' });
+  if (order.status === 'paid' || order.status === 'cancelled') {
+    return res.status(409).json({ error: '這筆訂單已經完成或取消了，沒辦法再修改' });
   }
   const { items, customerName, customerPhone, note, orderType } = req.body;
   if (!items || !items.length) {
@@ -274,11 +274,19 @@ app.delete('/api/admin/orders/:id', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-// 結束今日營業：把叫號重設回 0，明天第一筆訂單會是 No.01（不影響任何歷史訂單資料或營業額統計）
+// 結束今日營業：把叫號重設回 0，明天第一筆訂單會是 No.01；同時把今天標記賣完的品項全部恢復上架
+// （不影響任何歷史訂單資料或營業額統計）
 app.post('/api/admin/reset-counter', (req, res) => {
   db.orderCounter = 0;
+  let restoredCount = 0;
+  db.menu.forEach((m) => {
+    if (m.active === false) {
+      m.active = true;
+      restoredCount += 1;
+    }
+  });
   saveData();
-  res.json({ ok: true });
+  res.json({ ok: true, restoredCount });
 });
 
 server.listen(PORT, () => console.log('伺服器啟動於 port ' + PORT));
