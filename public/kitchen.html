@@ -252,6 +252,7 @@ function renderTickets(){
           <button class="tline-remove" data-remove-order="${o.id}" data-remove-idx="${idx}" title="賣完了，移除這項">✕</button>
         </div>
         ${it.opts && it.opts.length ? `<div class="opts">${it.opts.join('・')}</div>` : ''}
+        ${it.note ? `<div class="note-line" style="margin:6px 0 0;">📝 ${it.note}</div>` : ''}
       </div>`).join('');
     const created = new Date(o.createdAt);
     const time = created.toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'});
@@ -285,7 +286,6 @@ function renderTickets(){
       </div>
       <div class="perforation"></div>
       <div class="ticket-body">
-        ${o.note ? `<div class="note-line">📝 ${o.note}</div>` : ''}
         ${lines}
         <div class="ticket-total"><span class="label">應收金額</span><span class="amount">$${o.total}</span></div>
         <div class="ticket-actions">

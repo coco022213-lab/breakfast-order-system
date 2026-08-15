@@ -145,7 +145,6 @@
   </div>
   <input id="customerName" type="text" placeholder="請輸入姓名或桌號，方便叫號取餐" maxlength="12">
   <input id="customerPhone" type="tel" placeholder="電話號碼（選填，方便通知取餐）" maxlength="15" style="display:none;">
-  <textarea id="orderNote" placeholder="備註（選填，例如：不要洋蔥）" rows="2" maxlength="80"></textarea>
 </div>
 
 <div class="cat-tabs" id="catTabs"></div>
@@ -175,7 +174,7 @@ let MENU = [];
 let categories = [];
 let activeCat = '';
 let cart = [];
-let currentItem = null, currentSelections = {}, currentQty = 1;
+let currentItem = null, currentSelections = {}, currentQty = 1, currentNote = '';
 let orderType = 'dine-in';
 
 document.getElementById('typeDineIn').onclick = () => setOrderType('dine-in');
@@ -244,7 +243,7 @@ function calcExtra(){
 }
 
 function openModal(item){
-  currentItem = item; currentSelections = {}; currentQty = 1;
+  currentItem = item; currentSelections = {}; currentQty = 1; currentNote = '';
   (item.groups||[]).forEach(g => {
     currentSelections[g.key] = g.type === 'single' ? (g.default || g.options[0].v) : [];
   });
@@ -274,12 +273,18 @@ function renderModal(){
     <div class="qty-row"><span class="glabel">數量</span>
       <div class="qty-ctrl"><button id="qtyMinus">－</button><span>${currentQty}</span><button id="qtyPlus">＋</button></div>
     </div>
+    <div class="opt-group">
+      <span class="glabel">備註（選填）</span>
+      <input id="itemNote" type="text" placeholder="例如：少冰、不要蔥" value="${currentNote}"
+        style="width:100%; padding:10px 12px; border:2px solid var(--paper-deep); border-radius:8px; font-family:inherit; font-size:14px;">
+    </div>
     <button class="btn btn-primary" style="width:100%;margin-top:14px;" id="addCartBtn">加入訂單・$${unitPrice*currentQty}</button>
   `;
   document.getElementById('modalClose').onclick = closeModal;
   document.getElementById('qtyMinus').onclick = () => { if(currentQty>1){currentQty--; renderModal();} };
   document.getElementById('qtyPlus').onclick = () => { currentQty++; renderModal(); };
   document.getElementById('addCartBtn').onclick = addToCart;
+  document.getElementById('itemNote').oninput = e => { currentNote = e.target.value; };
   document.querySelectorAll('#modalBody .pill').forEach(p => {
     p.onclick = () => {
       const key=p.dataset.group, val=p.dataset.val, type=p.dataset.type;
@@ -298,7 +303,7 @@ function addToCart(){
     if(g.type==='single'){ if(currentSelections[g.key]) opts.push(currentSelections[g.key]); }
     else{ (currentSelections[g.key]||[]).forEach(v=>opts.push(v)); }
   });
-  cart.push({ name: currentItem.name, emoji: currentItem.emoji, qty: currentQty, unitPrice, opts });
+  cart.push({ name: currentItem.name, emoji: currentItem.emoji, qty: currentQty, unitPrice, opts, note: currentNote.trim() });
   closeModal();
   updateCartBar();
   showToast(`已加入 ${currentItem.name} x${currentQty}`);
@@ -319,6 +324,7 @@ function renderCartModal(){
       <button class="remove" data-idx="${idx}">✕</button>
       <div class="row1"><span class="iname">${c.name} x${c.qty}</span><span class="iprice">$${c.unitPrice*c.qty}</span></div>
       ${c.opts.length?`<div class="opts">${c.opts.join('・')}</div>`:''}
+      ${c.note?`<div class="opts" style="color:var(--ink-soft);">📝 ${c.note}</div>`:''}
     </div>`).join('');
   const isEditing = !!editingOrderId;
   document.getElementById('cartModalBody').innerHTML = `
@@ -352,7 +358,6 @@ async function submitOrder(){
   const body = {
     customerName: name,
     customerPhone: document.getElementById('customerPhone').value.trim(),
-    note: document.getElementById('orderNote').value.trim(),
     items: cart,
     orderType
   };
@@ -388,7 +393,6 @@ async function submitOrder(){
   unlockAudio();
   cart = [];
   updateCartBar();
-  document.getElementById('orderNote').value = '';
   document.getElementById('cartOverlay').classList.remove('active');
   sessionStorage.setItem('trackedOrderId', order.id);
   rememberOrderId(order.id);
@@ -459,7 +463,9 @@ function renderStatusCard(){
   const order = trackedOrder;
   const meta = statusMeta(order);
   const itemsHtml = order.items.map(it => `
-    <div class="sline">${it.name} x${it.qty}${it.opts && it.opts.length ? `<span class="sopts">${it.opts.join('・')}</span>` : ''}</div>
+    <div class="sline">${it.name} x${it.qty}${it.opts && it.opts.length ? `<span class="sopts">${it.opts.join('・')}</span>` : ''}
+      ${it.note ? `<div class="sopts" style="margin-left:0; color:var(--ink-soft);">📝 ${it.note}</div>` : ''}
+    </div>
   `).join('');
   document.getElementById('statusCard').innerHTML = `
     <span class="status-badge ${meta.badgeClass}">${meta.badgeText}</span>
@@ -468,7 +474,6 @@ function renderStatusCard(){
     <div class="status-num">No. ${String(order.num).padStart(2,'0')}</div>
     <div class="status-sub">${order.orderType === 'takeout' ? '🥡 外帶自取' : '🍽️ 內用'}・${order.customerName}${order.customerPhone ? '・'+order.customerPhone : ''}</div>
     <div class="status-items">
-      ${order.note ? `<div class="sline" style="color:var(--chili-deep);">📝 ${order.note}</div>` : ''}
       ${itemsHtml}
       <div class="status-total"><span>總計</span><span>$${order.total}</span></div>
     </div>
@@ -495,7 +500,6 @@ function enterEditMode(){
   setOrderType(trackedOrder.orderType);
   document.getElementById('customerName').value = trackedOrder.customerName;
   document.getElementById('customerPhone').value = trackedOrder.customerPhone || '';
-  document.getElementById('orderNote').value = trackedOrder.note || '';
   updateCartBar();
   document.getElementById('editBanner').style.display = 'flex';
   document.getElementById('statusView').style.display = 'none';
