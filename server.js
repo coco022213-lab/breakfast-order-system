@@ -167,7 +167,7 @@ app.get('/api/orders/:id', (req, res) => {
 });
 
 app.post('/api/orders', (req, res) => {
-  const { customerName, items, orderType, customerPhone, note } = req.body;
+  const { customerName, items, orderType, customerPhone } = req.body;
   if (!customerName || !items || !items.length) {
     return res.status(400).json({ error: '缺少姓名或餐點' });
   }
@@ -178,7 +178,6 @@ app.post('/api/orders', (req, res) => {
     num: db.orderCounter,
     customerName,
     customerPhone: (customerPhone || '').trim(),
-    note: (note || '').trim(),
     orderType: orderType === 'takeout' ? 'takeout' : 'dine-in',
     items,
     total,
@@ -198,7 +197,7 @@ app.put('/api/orders/:id', (req, res) => {
   if (order.status === 'paid' || order.status === 'cancelled') {
     return res.status(409).json({ error: '這筆訂單已經完成或取消了，沒辦法再修改' });
   }
-  const { items, customerName, customerPhone, note, orderType } = req.body;
+  const { items, customerName, customerPhone, orderType } = req.body;
   if (!items || !items.length) {
     return res.status(400).json({ error: '訂單至少要有一項餐點' });
   }
@@ -206,7 +205,6 @@ app.put('/api/orders/:id', (req, res) => {
   order.total = items.reduce((s, it) => s + it.unitPrice * it.qty, 0);
   if (customerName) order.customerName = customerName;
   order.customerPhone = (customerPhone || '').trim();
-  order.note = (note || '').trim();
   order.orderType = orderType === 'takeout' ? 'takeout' : 'dine-in';
   saveData();
   io.emit('order_updated', order);
