@@ -44,7 +44,11 @@ function saveData() {
 let db = loadData();
 
 function todayKey() {
-  return new Date().toISOString().slice(0, 10);
+  // 伺服器用的是世界標準時間(UTC)，跟台灣時間差8小時，
+  // 這裡手動加8小時換算成台灣時間，才不會半夜到早上8點之間誤判成「昨天」。
+  const now = new Date();
+  const taipei = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+  return taipei.toISOString().slice(0, 10);
 }
 function newId() {
   return crypto.randomUUID();
