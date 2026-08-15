@@ -59,6 +59,14 @@
   .tline .iqty{ color:var(--ink-soft); font-weight:700; font-size:16px; }
   .tline .iprice{ color:var(--chili); font-weight:700; font-size:15px; float:right; }
   .tline .opts{ color:var(--chili); font-weight:700; font-size:16px; margin-top:2px; }
+  .tline{ position:relative; padding-right:70px; }
+  .tline-actions{ position:absolute; right:0; top:-2px; display:flex; gap:6px; }
+  .tline-actions button{
+    border:none; border-radius:8px; font-family:inherit; font-weight:900; cursor:pointer;
+    width:30px; height:30px; font-size:14px;
+  }
+  .tline-swap{ background:var(--yolk); color:var(--ink); }
+  .tline-remove{ background:var(--chili); color:var(--white); }
   .ticket-total{ border-top:2px dashed var(--paper-deep); margin-top:16px; padding-top:14px; display:flex; justify-content:space-between; align-items:center; }
   .ticket-total .label{ font-size:14px; color:var(--ink-soft); font-weight:700; }
   .ticket-total .amount{ font-size:28px; font-weight:900; color:var(--chili); }
@@ -159,6 +167,7 @@
   <div class="ticket-grid" id="ticketGrid"></div>
 </div>
 <div class="overlay" id="soldOutOverlay"><div class="modal" id="soldOutModalBody"></div></div>
+<div class="overlay" id="swapOverlay"><div class="modal" id="swapModalBody"></div></div>
 <div class="toast" id="toast"></div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -233,11 +242,15 @@ function renderTickets(){
   }
   grid.innerHTML = '';
   orders.forEach(o => {
-    const lines = o.items.map(it => `
+    const lines = o.items.map((it, idx) => `
       <div class="tline">
         <span class="iprice">$${it.unitPrice}</span>
         <span class="iname">${it.emoji||''} ${it.name}</span>
         <span class="iqty"> x${it.qty}</span>
+        <div class="tline-actions">
+          <button class="tline-swap" data-swap-order="${o.id}" data-swap-idx="${idx}" title="換成別的品項">🔄</button>
+          <button class="tline-remove" data-remove-order="${o.id}" data-remove-idx="${idx}" title="賣完了，移除這項">✕</button>
+        </div>
         ${it.opts && it.opts.length ? `<div class="opts">${it.opts.join('・')}</div>` : ''}
       </div>`).join('');
     const created = new Date(o.createdAt);
@@ -300,7 +313,105 @@ function renderTickets(){
       await fetch(`/api/orders/${btn.dataset.cancel}/cancel`, { method:'POST' });
     };
   });
+  grid.querySelectorAll('[data-remove-order]').forEach(btn => {
+    btn.onclick = () => removeItemFromOrder(btn.dataset.removeOrder, Number(btn.dataset.removeIdx));
+  });
+  grid.querySelectorAll('[data-swap-order]').forEach(btn => {
+    btn.onclick = () => openSwapPanel(btn.dataset.swapOrder, Number(btn.dataset.swapIdx));
+  });
 }
+
+// 把訂單目前的品項送去更新（同時用來處理「移除」跟「換品項」）
+async function updateOrderItems(orderId, newItems){
+  const order = orders.find(o => o.id === orderId);
+  if(!order) return;
+  const res = await fetch(`/api/orders/${orderId}`, {
+    method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      items: newItems,
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      note: order.note,
+      orderType: order.orderType,
+    })
+  });
+  if(!res.ok){
+    const err = await res.json().catch(()=>({}));
+    showToast(err.error || '更新失敗');
+    return false;
+  }
+  const updated = await res.json();
+  const idx = orders.findIndex(o => o.id === orderId);
+  if(idx > -1) orders[idx] = updated;
+  renderTickets();
+  return true;
+}
+
+function removeItemFromOrder(orderId, itemIdx){
+  const order = orders.find(o => o.id === orderId);
+  if(!order) return;
+  const item = order.items[itemIdx];
+  if(order.items.length === 1){
+    showToast('這是最後一項了，如果整單不做了請直接取消訂單');
+    return;
+  }
+  if(!confirm(`確定「${item.name}」賣完了嗎？會直接從這張訂單移除，金額也會扣掉。`)) return;
+  const newItems = order.items.filter((_, i) => i !== itemIdx);
+  updateOrderItems(orderId, newItems).then(ok => {
+    if(ok) showToast(`已移除「${item.name}」，金額已更新`);
+  });
+}
+
+async function openSwapPanel(orderId, itemIdx){
+  const order = orders.find(o => o.id === orderId);
+  if(!order) return;
+  const oldItem = order.items[itemIdx];
+  document.getElementById('swapOverlay').classList.add('active');
+  const modal = document.getElementById('swapModalBody');
+  modal.innerHTML = `<div class="modal-head"><h3 style="margin:0;">換成別的品項</h3><button class="close-x" id="swapClose">✕</button></div>
+    <div class="hint" style="margin:8px 0 12px;">原本是「${oldItem.name}」x${oldItem.qty}，選一個要換成的品項（數量會維持 x${oldItem.qty}，不含原本的客製化選項）</div>
+    <input class="soldout-search" id="swapSearch" placeholder="搜尋品項名稱…">
+    <div id="swapList" style="max-height:45vh; overflow-y:auto;"><div class="empty-state">載入中…</div></div>`;
+  document.getElementById('swapClose').onclick = () => document.getElementById('swapOverlay').classList.remove('active');
+
+  const res = await fetch('/api/menu');
+  const menu = await res.json();
+  const listEl = document.getElementById('swapList');
+  const searchEl = document.getElementById('swapSearch');
+
+  function renderList(){
+    const term = searchEl.value.trim();
+    const filtered = term ? menu.filter(m => m.name.includes(term) || m.category.includes(term)) : menu;
+    if(filtered.length === 0){
+      listEl.innerHTML = '<div class="empty-state">找不到符合的品項</div>';
+      return;
+    }
+    listEl.innerHTML = filtered.map(m => `
+      <div class="soldout-row">
+        <span class="sname">${m.emoji||''} ${m.name}<span class="scat">${m.category}</span></span>
+        <span class="sprice">$${m.price}</span>
+        <button class="btn btn-primary stoggle" data-pick="${m.id}">選這個</button>
+      </div>
+    `).join('');
+    listEl.querySelectorAll('[data-pick]').forEach(btn => {
+      btn.onclick = async () => {
+        const picked = menu.find(m => m.id === btn.dataset.pick);
+        const newItem = { name: picked.name, emoji: picked.emoji, qty: oldItem.qty, unitPrice: picked.price, opts: [] };
+        const newItems = order.items.map((it, i) => i === itemIdx ? newItem : it);
+        const ok = await updateOrderItems(orderId, newItems);
+        if(ok){
+          document.getElementById('swapOverlay').classList.remove('active');
+          showToast(`已把「${oldItem.name}」換成「${picked.name}」`);
+        }
+      };
+    });
+  }
+  searchEl.oninput = renderList;
+  renderList();
+}
+document.getElementById('swapOverlay').addEventListener('click', e => {
+  if(e.target.id === 'swapOverlay') document.getElementById('swapOverlay').classList.remove('active');
+});
 
 function showToast(msg){
   const t = document.getElementById('toast');
@@ -376,13 +487,16 @@ socket.on('order_updated', (order) => {
 setInterval(renderTickets, 30000);
 
 document.getElementById('endDayBtn').onclick = async () => {
-  let msg = '確定要結束今日營業嗎？\n\n這只會把叫號重設回 No.01，明天開始的訂單會從 1 重新編號。今天已經完成的訂單、營業額紀錄都不會受影響。';
+  let msg = '確定要結束今日營業嗎？\n\n這會做兩件事：\n1. 叫號重設回 No.01，明天從 1 重新開始編號\n2. 今天標記「賣完」的品項會全部自動恢復上架\n\n今天已經完成的訂單、營業額紀錄都不會受影響。';
   if(orders.length > 0){
     msg = `⚠️ 目前還有 ${orders.length} 筆訂單尚未完成！\n\n` + msg;
   }
   if(!confirm(msg)) return;
-  await fetch('/api/admin/reset-counter', { method:'POST' });
-  showToast('已重設，明天從 No.01 開始');
+  const res = await fetch('/api/admin/reset-counter', { method:'POST' });
+  const data = await res.json();
+  showToast(data.restoredCount > 0
+    ? `已重設叫號，並恢復 ${data.restoredCount} 項賣完的品項上架`
+    : '已重設，明天從 No.01 開始');
 };
 
 // ---------------- 標記賣完 ----------------
