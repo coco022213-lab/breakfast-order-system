@@ -139,6 +139,22 @@
   .soldout-login input{ width:100%; padding:14px; font-size:22px; text-align:center; letter-spacing:6px;
     border:2px solid var(--paper-deep); border-radius:12px; margin:16px 0; font-family:inherit; }
   .empty-state{ text-align:center; padding:30px 10px; color:var(--ink-soft); font-size:13px; }
+
+  .picker-cat-tabs{ display:flex; gap:8px; overflow-x:auto; padding-bottom:10px; margin-bottom:14px; border-bottom:2px dashed var(--paper-deep); }
+  .picker-tab{
+    flex:none; border:2px solid var(--paper-deep); background:var(--white); color:var(--ink); font-family:inherit;
+    font-weight:700; padding:9px 16px; border-radius:100px; cursor:pointer; font-size:14px; white-space:nowrap;
+  }
+  .picker-tab.active{ background:var(--scallion); border-color:var(--scallion); color:var(--white); }
+  .picker-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; max-height:48vh; overflow-y:auto; padding-bottom:4px; }
+  .picker-card{
+    background:var(--white); border-radius:12px; box-shadow:var(--shadow); padding:12px 8px;
+    text-align:center; cursor:pointer; border:2px solid transparent;
+  }
+  .picker-card:active{ border-color:var(--yolk); }
+  .picker-card .pemoji{ font-size:24px; display:block; margin-bottom:4px; }
+  .picker-card .pname{ font-weight:700; font-size:13px; line-height:1.25; }
+  .picker-card .pprice{ color:var(--chili); font-weight:900; font-size:12px; margin-top:4px; }
 </style>
 </head>
 <body>
@@ -371,48 +387,20 @@ async function openSwapPanel(orderId, itemIdx){
   const order = orders.find(o => o.id === orderId);
   if(!order) return;
   const oldItem = order.items[itemIdx];
-  document.getElementById('swapOverlay').classList.add('active');
-  const modal = document.getElementById('swapModalBody');
-  modal.innerHTML = `<div class="modal-head"><h3 style="margin:0;">換成別的品項</h3><button class="close-x" id="swapClose">✕</button></div>
-    <div class="hint" style="margin:8px 0 12px;">原本是「${oldItem.name}」x${oldItem.qty}，選一個要換成的品項（數量會維持 x${oldItem.qty}，不含原本的客製化選項）</div>
-    <input class="soldout-search" id="swapSearch" placeholder="搜尋品項名稱…">
-    <div id="swapList" style="max-height:45vh; overflow-y:auto;"><div class="empty-state">載入中…</div></div>`;
-  document.getElementById('swapClose').onclick = () => document.getElementById('swapOverlay').classList.remove('active');
-
-  const res = await fetch('/api/menu');
-  const menu = await res.json();
-  const listEl = document.getElementById('swapList');
-  const searchEl = document.getElementById('swapSearch');
-
-  function renderList(){
-    const term = searchEl.value.trim();
-    const filtered = term ? menu.filter(m => m.name.includes(term) || m.category.includes(term)) : menu;
-    if(filtered.length === 0){
-      listEl.innerHTML = '<div class="empty-state">找不到符合的品項</div>';
-      return;
+  openItemPicker({
+    title: '換成別的品項',
+    sub: `原本是「${oldItem.name}」x${oldItem.qty}，選一個要換成的品項（數量會維持 x${oldItem.qty}，不含原本的客製化選項）`,
+    pickLabel: '換成這個',
+    onPick: async (picked) => {
+      const newItem = { name: picked.name, emoji: picked.emoji, qty: oldItem.qty, unitPrice: picked.price, opts: [] };
+      const newItems = order.items.map((it, i) => i === itemIdx ? newItem : it);
+      const ok = await updateOrderItems(orderId, newItems);
+      if(ok){
+        document.getElementById('swapOverlay').classList.remove('active');
+        showToast(`已把「${oldItem.name}」換成「${picked.name}」`);
+      }
     }
-    listEl.innerHTML = filtered.map(m => `
-      <div class="soldout-row">
-        <span class="sname">${m.emoji||''} ${m.name}<span class="scat">${m.category}</span></span>
-        <span class="sprice">$${m.price}</span>
-        <button class="btn btn-primary stoggle" data-pick="${m.id}">選這個</button>
-      </div>
-    `).join('');
-    listEl.querySelectorAll('[data-pick]').forEach(btn => {
-      btn.onclick = async () => {
-        const picked = menu.find(m => m.id === btn.dataset.pick);
-        const newItem = { name: picked.name, emoji: picked.emoji, qty: oldItem.qty, unitPrice: picked.price, opts: [] };
-        const newItems = order.items.map((it, i) => i === itemIdx ? newItem : it);
-        const ok = await updateOrderItems(orderId, newItems);
-        if(ok){
-          document.getElementById('swapOverlay').classList.remove('active');
-          showToast(`已把「${oldItem.name}」換成「${picked.name}」`);
-        }
-      };
-    });
-  }
-  searchEl.oninput = renderList;
-  renderList();
+  });
 }
 document.getElementById('swapOverlay').addEventListener('click', e => {
   if(e.target.id === 'swapOverlay') document.getElementById('swapOverlay').classList.remove('active');
@@ -421,48 +409,71 @@ document.getElementById('swapOverlay').addEventListener('click', e => {
 async function openAddItemPanel(orderId){
   const order = orders.find(o => o.id === orderId);
   if(!order) return;
+  openItemPicker({
+    title: '幫客人加點',
+    sub: `選一個要幫 No.${String(order.num).padStart(2,'0')}・${order.customerName} 加進去的品項（不含客製化選項，數量預設 x1）`,
+    pickLabel: '加這個',
+    onPick: async (picked) => {
+      const newItem = { name: picked.name, emoji: picked.emoji, qty: 1, unitPrice: picked.price, opts: [] };
+      const newItems = [...order.items, newItem];
+      const ok = await updateOrderItems(orderId, newItems);
+      if(ok){
+        document.getElementById('swapOverlay').classList.remove('active');
+        showToast(`已幫 No.${String(order.num).padStart(2,'0')} 加點「${picked.name}」`);
+      }
+    }
+  });
+}
+
+// 共用的「分類頁籤＋方格」選品項介面，換品項／加點都用這個
+let pickerActiveCat = '';
+async function openItemPicker({ title, sub, pickLabel, onPick }){
   document.getElementById('swapOverlay').classList.add('active');
   const modal = document.getElementById('swapModalBody');
-  modal.innerHTML = `<div class="modal-head"><h3 style="margin:0;">幫客人加點</h3><button class="close-x" id="swapClose">✕</button></div>
-    <div class="hint" style="margin:8px 0 12px;">選一個要幫 No.${String(order.num).padStart(2,'0')}・${order.customerName} 加進去的品項（不含客製化選項，數量預設 x1）</div>
-    <input class="soldout-search" id="swapSearch" placeholder="搜尋品項名稱…">
-    <div id="swapList" style="max-height:45vh; overflow-y:auto;"><div class="empty-state">載入中…</div></div>`;
+  modal.innerHTML = `<div class="modal-head"><h3 style="margin:0;">${title}</h3><button class="close-x" id="swapClose">✕</button></div>
+    <div class="hint" style="margin:8px 0 12px;">${sub}</div>
+    <div id="pickerCatTabs" class="picker-cat-tabs"></div>
+    <div id="pickerGrid" class="picker-grid"><div class="empty-state">載入中…</div></div>`;
   document.getElementById('swapClose').onclick = () => document.getElementById('swapOverlay').classList.remove('active');
 
   const res = await fetch('/api/menu');
   const menu = await res.json();
-  const listEl = document.getElementById('swapList');
-  const searchEl = document.getElementById('swapSearch');
+  const categories = [...new Set(menu.map(m => m.category))];
+  if(!pickerActiveCat || !categories.includes(pickerActiveCat)) pickerActiveCat = categories[0] || '';
 
-  function renderList(){
-    const term = searchEl.value.trim();
-    const filtered = term ? menu.filter(m => m.name.includes(term) || m.category.includes(term)) : menu;
-    if(filtered.length === 0){
-      listEl.innerHTML = '<div class="empty-state">找不到符合的品項</div>';
+  function renderTabs(){
+    document.getElementById('pickerCatTabs').innerHTML = categories.map(c =>
+      `<button class="picker-tab ${c===pickerActiveCat?'active':''}" data-cat="${c}">${c}</button>`
+    ).join('');
+    document.querySelectorAll('.picker-tab').forEach(btn => {
+      btn.onclick = () => { pickerActiveCat = btn.dataset.cat; renderTabs(); renderGrid(); };
+    });
+  }
+
+  function renderGrid(){
+    const items = menu.filter(m => m.category === pickerActiveCat);
+    const gridEl = document.getElementById('pickerGrid');
+    if(items.length === 0){
+      gridEl.innerHTML = '<div class="empty-state">這個分類沒有品項</div>';
       return;
     }
-    listEl.innerHTML = filtered.map(m => `
-      <div class="soldout-row">
-        <span class="sname">${m.emoji||''} ${m.name}<span class="scat">${m.category}</span></span>
-        <span class="sprice">$${m.price}</span>
-        <button class="btn btn-primary stoggle" data-pick="${m.id}">加這個</button>
+    gridEl.innerHTML = items.map(m => `
+      <div class="picker-card" data-pick="${m.id}">
+        <span class="pemoji">${m.emoji||'🍽️'}</span>
+        <div class="pname">${m.name}</div>
+        <div class="pprice">$${m.price}</div>
       </div>
     `).join('');
-    listEl.querySelectorAll('[data-pick]').forEach(btn => {
-      btn.onclick = async () => {
-        const picked = menu.find(m => m.id === btn.dataset.pick);
-        const newItem = { name: picked.name, emoji: picked.emoji, qty: 1, unitPrice: picked.price, opts: [] };
-        const newItems = [...order.items, newItem];
-        const ok = await updateOrderItems(orderId, newItems);
-        if(ok){
-          document.getElementById('swapOverlay').classList.remove('active');
-          showToast(`已幫 No.${String(order.num).padStart(2,'0')} 加點「${picked.name}」`);
-        }
+    gridEl.querySelectorAll('[data-pick]').forEach(card => {
+      card.onclick = () => {
+        const picked = menu.find(m => m.id === card.dataset.pick);
+        onPick(picked);
       };
     });
   }
-  searchEl.oninput = renderList;
-  renderList();
+
+  renderTabs();
+  renderGrid();
 }
 
 function showToast(msg){
