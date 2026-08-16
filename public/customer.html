@@ -31,20 +31,18 @@
   }
   .cat-tabs .pill{ white-space:nowrap; }
 
-  .item-list{ padding:0 16px 140px; display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; }
+  .item-list{ padding:0 16px 140px; display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; }
   .item-card{
-    background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;
-    display:flex; flex-direction:column; cursor:pointer; border:2px solid transparent; min-height:110px;
+    background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+    cursor:pointer; border:2px solid transparent; aspect-ratio:1/1; padding:10px 6px;
   }
   .item-card:active{ border-color:var(--yolk); }
-  .item-card .info{
-    flex:1; display:flex; align-items:center; justify-content:center; text-align:center;
-    padding:10px 6px;
-  }
-  .item-card .name{ font-weight:900; font-size:19px; line-height:1.25; }
+  .item-card .info{ display:flex; align-items:center; justify-content:center; text-align:center; }
+  .item-card .name{ font-weight:900; font-size:16px; line-height:1.25; }
   .item-card .price{
-    background:var(--yolk); color:var(--ink); font-weight:900; font-size:16px;
-    text-align:center; padding:9px; width:100%;
+    background:var(--chili); color:var(--white); font-weight:900; font-size:14px;
+    text-align:center; padding:6px 14px; border-radius:100px;
   }
 
   .cart-bar{
