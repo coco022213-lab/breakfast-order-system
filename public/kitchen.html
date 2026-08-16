@@ -161,6 +161,7 @@
 <div class="topbar">
   <div><h1>👵 出餐看板</h1><div class="sub">依點餐順序排列・完成請按「完成並收款」</div></div>
   <div style="display:flex; align-items:center; gap:8px;">
+    <span class="sound-hint" id="connHint"><span class="dot"></span>連線正常</span>
     <span class="sound-hint off" id="soundHint"><span class="dot"></span>提示音準備中</span>
     <button class="soldout-btn" id="soldOutBtn">🚫 標記賣完</button>
     <button class="end-day-btn" id="endDayBtn">🔚 結束今日營業</button>
@@ -193,6 +194,25 @@ let orders = [];
 let recentlyCompleted = []; // 最近完成的訂單，供「復原」使用
 const RECENT_LIMIT = 8;
 const socket = io();
+let hasConnectedBefore = false;
+
+socket.on('connect', () => {
+  const hint = document.getElementById('connHint');
+  hint.classList.remove('off');
+  hint.innerHTML = '<span class="dot"></span>連線正常';
+  if(hasConnectedBefore){
+    // 斷線後重新連上，補抓斷線期間可能漏掉的訂單狀態
+    showToast('連線已恢復，重新同步訂單中…');
+    loadOrders();
+    loadSummary();
+  }
+  hasConnectedBefore = true;
+});
+socket.on('disconnect', () => {
+  const hint = document.getElementById('connHint');
+  hint.classList.add('off');
+  hint.innerHTML = '<span class="dot"></span>連線中斷，重新連線中…';
+});
 
 // ---------------- 提示音（第一次點畫面任何地方就自動啟用，不用特地按按鈕） ----------------
 let audioCtx = null;
