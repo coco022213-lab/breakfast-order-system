@@ -59,14 +59,12 @@
   .tline .iqty{ color:var(--ink-soft); font-weight:700; font-size:16px; }
   .tline .iprice{ color:var(--chili); font-weight:700; font-size:15px; float:right; }
   .tline .opts{ color:var(--chili); font-weight:700; font-size:16px; margin-top:2px; }
-  .tline{ position:relative; padding-right:70px; }
-  .tline-actions{ position:absolute; right:0; top:-2px; display:flex; gap:6px; }
-  .tline-actions button{
+  .tline{ position:relative; padding-right:78px; }
+  .tline-actions{ position:absolute; right:0; top:-2px; }
+  .tline-edit{
     border:none; border-radius:8px; font-family:inherit; font-weight:900; cursor:pointer;
-    width:30px; height:30px; font-size:14px;
+    background:var(--ink); color:var(--paper); padding:7px 12px; font-size:13px;
   }
-  .tline-swap{ background:var(--yolk); color:var(--ink); }
-  .tline-remove{ background:var(--chili); color:var(--white); }
   .add-item-to-order-btn{ width:100%; margin-top:14px; font-size:14px; padding:10px; }
   .ticket-total{ border-top:2px dashed var(--paper-deep); margin-top:16px; padding-top:14px; display:flex; justify-content:space-between; align-items:center; }
   .ticket-total .label{ font-size:14px; color:var(--ink-soft); font-weight:700; }
@@ -122,20 +120,6 @@
     font-size:13px; padding:8px 14px; border-radius:100px; font-weight:700; cursor:pointer; font-family:inherit;
   }
   .soldout-btn:hover{ background:rgba(255,255,255,0.1); }
-  .soldout-search{
-    width:100%; padding:10px 12px; border:2px solid var(--paper-deep); border-radius:8px;
-    font-family:inherit; font-size:14px; margin-bottom:14px;
-  }
-  .soldout-row{
-    display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--paper-deep);
-  }
-  .soldout-row:last-child{ border-bottom:none; }
-  .soldout-row .sname{ flex:1; font-weight:700; font-size:14px; }
-  .soldout-row .sname .scat{ color:var(--ink-soft); font-weight:500; font-size:12px; margin-left:6px; }
-  .soldout-row .sprice{ color:var(--chili); font-weight:700; font-size:13px; }
-  .soldout-row .stoggle{ padding:8px 14px; font-size:12px; border-radius:8px; }
-  .soldout-row .stoggle.is-off{ background:var(--chili); border-color:var(--chili); color:var(--white); }
-  .soldout-row.inactive .sname{ color:var(--ink-soft); text-decoration:line-through; }
   .soldout-login input{ width:100%; padding:14px; font-size:22px; text-align:center; letter-spacing:6px;
     border:2px solid var(--paper-deep); border-radius:12px; margin:16px 0; font-family:inherit; }
   .empty-state{ text-align:center; padding:30px 10px; color:var(--ink-soft); font-size:13px; }
@@ -155,6 +139,32 @@
   .picker-card .pemoji{ font-size:24px; display:block; margin-bottom:4px; }
   .picker-card .pname{ font-weight:700; font-size:13px; line-height:1.25; }
   .picker-card .pprice{ color:var(--chili); font-weight:900; font-size:12px; margin-top:4px; }
+
+  .cancel-item-btn{
+    width:100%; border:2px solid var(--chili); background:rgba(194,54,22,0.08); color:var(--chili-deep);
+    font-family:inherit; font-weight:900; padding:14px; border-radius:12px; cursor:pointer; font-size:15px;
+    margin-bottom:16px;
+  }
+  .cancel-item-btn:hover{ background:rgba(194,54,22,0.15); }
+  .divider-text{
+    display:flex; align-items:center; gap:10px; color:var(--ink-soft); font-size:13px; font-weight:700; margin-bottom:14px;
+  }
+  .divider-text::before, .divider-text::after{ content:''; flex:1; height:2px; background:var(--paper-deep); }
+
+  .soldout-grid-card{
+    background:var(--white); border-radius:12px; box-shadow:var(--shadow); padding:12px 8px 10px;
+    text-align:center; cursor:pointer; border:2px solid transparent; position:relative;
+  }
+  .soldout-grid-card .pemoji{ font-size:24px; display:block; margin-bottom:4px; }
+  .soldout-grid-card .pname{ font-weight:700; font-size:13px; line-height:1.25; }
+  .soldout-grid-card .pprice{ color:var(--chili); font-weight:900; font-size:12px; margin-top:4px; }
+  .soldout-grid-card .pstatus{
+    display:inline-block; font-size:10px; font-weight:900; padding:2px 8px; border-radius:100px; margin-top:6px;
+  }
+  .soldout-grid-card.is-on .pstatus{ background:rgba(79,111,63,0.15); color:var(--scallion-deep); }
+  .soldout-grid-card.is-off{ background:#EFE6D0; border-color:var(--chili); opacity:0.75; }
+  .soldout-grid-card.is-off .pname{ text-decoration:line-through; color:var(--ink-soft); }
+  .soldout-grid-card.is-off .pstatus{ background:var(--chili); color:var(--white); }
 </style>
 </head>
 <body>
@@ -285,8 +295,7 @@ function renderTickets(){
         <span class="iname">${it.emoji||''} ${it.name}</span>
         <span class="iqty"> x${it.qty}</span>
         <div class="tline-actions">
-          <button class="tline-swap" data-swap-order="${o.id}" data-swap-idx="${idx}" title="換成別的品項">🔄</button>
-          <button class="tline-remove" data-remove-order="${o.id}" data-remove-idx="${idx}" title="賣完了，移除這項">✕</button>
+          <button class="tline-edit" data-edit-order="${o.id}" data-edit-idx="${idx}" title="編輯這個品項">✏️ 編輯</button>
         </div>
         ${it.opts && it.opts.length ? `<div class="opts">${it.opts.join('・')}</div>` : ''}
         ${it.note ? `<div class="note-line" style="margin:6px 0 0;">📝 ${it.note}</div>` : ''}
@@ -351,11 +360,8 @@ function renderTickets(){
       await fetch(`/api/orders/${btn.dataset.cancel}/cancel`, { method:'POST' });
     };
   });
-  grid.querySelectorAll('[data-remove-order]').forEach(btn => {
-    btn.onclick = () => removeItemFromOrder(btn.dataset.removeOrder, Number(btn.dataset.removeIdx));
-  });
-  grid.querySelectorAll('[data-swap-order]').forEach(btn => {
-    btn.onclick = () => openSwapPanel(btn.dataset.swapOrder, Number(btn.dataset.swapIdx));
+  grid.querySelectorAll('[data-edit-order]').forEach(btn => {
+    btn.onclick = () => openEditItemPanel(btn.dataset.editOrder, Number(btn.dataset.editIdx));
   });
   grid.querySelectorAll('[data-addto]').forEach(btn => {
     btn.onclick = () => openAddItemPanel(btn.dataset.addto);
@@ -388,29 +394,33 @@ async function updateOrderItems(orderId, newItems){
   return true;
 }
 
-function removeItemFromOrder(orderId, itemIdx){
-  const order = orders.find(o => o.id === orderId);
-  if(!order) return;
-  const item = order.items[itemIdx];
-  if(order.items.length === 1){
-    showToast('這是最後一項了，如果整單不做了請直接取消訂單');
-    return;
-  }
-  if(!confirm(`確定「${item.name}」賣完了嗎？會直接從這張訂單移除，金額也會扣掉。`)) return;
-  const newItems = order.items.filter((_, i) => i !== itemIdx);
-  updateOrderItems(orderId, newItems).then(ok => {
-    if(ok) showToast(`已移除「${item.name}」，金額已更新`);
-  });
-}
-
-async function openSwapPanel(orderId, itemIdx){
+// 編輯訂單裡的單一品項：同一個面板裡「取消這項」跟「換成其他品項」都在一起
+async function openEditItemPanel(orderId, itemIdx){
   const order = orders.find(o => o.id === orderId);
   if(!order) return;
   const oldItem = order.items[itemIdx];
+
+  const cancelHandler = () => {
+    if(order.items.length === 1){
+      showToast('這是最後一項了，如果整單不做了請直接取消訂單');
+      return;
+    }
+    if(!confirm(`確定「${oldItem.name}」要取消嗎？會直接從這張訂單移除，金額也會扣掉。`)) return;
+    const newItems = order.items.filter((_, i) => i !== itemIdx);
+    updateOrderItems(orderId, newItems).then(ok => {
+      if(ok){
+        document.getElementById('swapOverlay').classList.remove('active');
+        showToast(`已取消「${oldItem.name}」，金額已更新`);
+      }
+    });
+  };
+
   openItemPicker({
-    title: '換成別的品項',
-    sub: `原本是「${oldItem.name}」x${oldItem.qty}，選一個要換成的品項（數量會維持 x${oldItem.qty}，不含原本的客製化選項）`,
-    pickLabel: '換成這個',
+    title: '編輯這個品項',
+    sub: `目前是「${oldItem.name}」x${oldItem.qty}`,
+    cancelLabel: '❌ 客人不要這項了，直接取消',
+    onCancel: cancelHandler,
+    dividerText: '或是換成其他品項',
     onPick: async (picked) => {
       const newItem = { name: picked.name, emoji: picked.emoji, qty: oldItem.qty, unitPrice: picked.price, opts: [] };
       const newItems = order.items.map((it, i) => i === itemIdx ? newItem : it);
@@ -432,7 +442,6 @@ async function openAddItemPanel(orderId){
   openItemPicker({
     title: '幫客人加點',
     sub: `選一個要幫 No.${String(order.num).padStart(2,'0')}・${order.customerName} 加進去的品項（不含客製化選項，數量預設 x1）`,
-    pickLabel: '加這個',
     onPick: async (picked) => {
       const newItem = { name: picked.name, emoji: picked.emoji, qty: 1, unitPrice: picked.price, opts: [] };
       const newItems = [...order.items, newItem];
@@ -445,16 +454,21 @@ async function openAddItemPanel(orderId){
   });
 }
 
-// 共用的「分類頁籤＋方格」選品項介面，換品項／加點都用這個
+// 共用的「分類頁籤＋方格」選品項介面，換品項／加點/取消都用這個
 let pickerActiveCat = '';
-async function openItemPicker({ title, sub, pickLabel, onPick }){
+async function openItemPicker({ title, sub, onPick, cancelLabel, onCancel, dividerText }){
   document.getElementById('swapOverlay').classList.add('active');
   const modal = document.getElementById('swapModalBody');
   modal.innerHTML = `<div class="modal-head"><h3 style="margin:0;">${title}</h3><button class="close-x" id="swapClose">✕</button></div>
     <div class="hint" style="margin:8px 0 12px;">${sub}</div>
+    ${cancelLabel ? `<button class="cancel-item-btn" id="cancelItemBtn">${cancelLabel}</button>` : ''}
+    ${dividerText ? `<div class="divider-text">${dividerText}</div>` : ''}
     <div id="pickerCatTabs" class="picker-cat-tabs"></div>
     <div id="pickerGrid" class="picker-grid"><div class="empty-state">載入中…</div></div>`;
   document.getElementById('swapClose').onclick = () => document.getElementById('swapOverlay').classList.remove('active');
+  if(cancelLabel && onCancel){
+    document.getElementById('cancelItemBtn').onclick = onCancel;
+  }
 
   const res = await fetch('/api/menu');
   const menu = await res.json();
@@ -584,13 +598,14 @@ document.getElementById('endDayBtn').onclick = async () => {
 
 // ---------------- 標記賣完 ----------------
 let soldOutPin = sessionStorage.getItem('admin_pin') || '';
+let soldOutActiveCat = '';
 
 document.getElementById('soldOutBtn').onclick = openSoldOutPanel;
 
 function openSoldOutPanel(){
   document.getElementById('soldOutOverlay').classList.add('active');
   if(soldOutPin){
-    renderSoldOutList();
+    renderSoldOutGrid();
   } else {
     renderSoldOutLogin();
   }
@@ -617,7 +632,7 @@ function renderSoldOutLogin(errorMsg){
     if(res.ok){
       soldOutPin = pin;
       sessionStorage.setItem('admin_pin', pin);
-      renderSoldOutList();
+      renderSoldOutGrid();
     } else {
       renderSoldOutLogin('密碼錯誤，請再試一次');
     }
@@ -626,58 +641,69 @@ function renderSoldOutLogin(errorMsg){
   document.getElementById('soldOutPinInput').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 }
 
-async function renderSoldOutList(searchTerm){
+async function renderSoldOutGrid(){
   const modal = document.getElementById('soldOutModalBody');
   const res = await fetch('/api/menu?all=1');
   if(!res.ok){ renderSoldOutLogin(); return; }
   const menu = await res.json();
-  const term = (searchTerm || '').trim();
-  const filtered = term ? menu.filter(m => m.name.includes(term) || m.category.includes(term)) : menu;
+  const categories = [...new Set(menu.map(m => m.category))];
+  if(!soldOutActiveCat || !categories.includes(soldOutActiveCat)) soldOutActiveCat = categories[0] || '';
 
   modal.innerHTML = `
     <div class="modal-head"><h3 style="margin:0;">🚫 標記賣完</h3><button class="close-x" id="soldOutClose">✕</button></div>
-    <input class="soldout-search" id="soldOutSearch" placeholder="搜尋品項名稱或分類…" value="${term}">
-    <div id="soldOutList" style="max-height:50vh; overflow-y:auto;"></div>
+    <div class="hint" style="margin:8px 0 12px;">點方格切換「上架中／已賣完」</div>
+    <div id="soldOutCatTabs" class="picker-cat-tabs"></div>
+    <div id="soldOutGrid" class="picker-grid"></div>
   `;
   document.getElementById('soldOutClose').onclick = () => document.getElementById('soldOutOverlay').classList.remove('active');
-  const searchInput = document.getElementById('soldOutSearch');
-  searchInput.oninput = () => renderSoldOutList(searchInput.value);
-  searchInput.focus();
-  searchInput.setSelectionRange(term.length, term.length);
 
-  const list = document.getElementById('soldOutList');
-  if(filtered.length === 0){
-    list.innerHTML = '<div class="empty-state">找不到符合的品項</div>';
-    return;
+  function renderTabs(){
+    document.getElementById('soldOutCatTabs').innerHTML = categories.map(c =>
+      `<button class="picker-tab ${c===soldOutActiveCat?'active':''}" data-cat="${c}">${c}</button>`
+    ).join('');
+    document.querySelectorAll('#soldOutCatTabs .picker-tab').forEach(btn => {
+      btn.onclick = () => { soldOutActiveCat = btn.dataset.cat; renderTabs(); renderGrid(); };
+    });
   }
-  list.innerHTML = filtered.map(m => {
-    const isActive = m.active !== false;
-    return `
-      <div class="soldout-row ${isActive?'':'inactive'}">
-        <span class="sname">${m.emoji||''} ${m.name}<span class="scat">${m.category}</span></span>
-        <span class="sprice">$${m.price}</span>
-        <button class="btn btn-outline stoggle ${isActive?'':'is-off'}" data-toggle-id="${m.id}" data-active="${isActive}">${isActive?'標記賣完':'恢復上架'}</button>
-      </div>
-    `;
-  }).join('');
-  list.querySelectorAll('[data-toggle-id]').forEach(btn => {
-    btn.onclick = async () => {
-      const id = btn.dataset.toggleId;
-      const currentlyActive = btn.dataset.active === 'true';
-      const res2 = await fetch(`/api/admin/menu/${id}`, {
-        method:'PUT', headers:{'Content-Type':'application/json','x-admin-pin':soldOutPin},
-        body: JSON.stringify({ active: !currentlyActive })
-      });
-      if(res2.status === 401){
-        soldOutPin = '';
-        sessionStorage.removeItem('admin_pin');
-        renderSoldOutLogin('密碼已失效，請重新輸入');
-        return;
-      }
-      showToast(currentlyActive ? '已標記賣完，顧客點餐頁不會再顯示這項' : '已恢復上架');
-      renderSoldOutList(searchInput.value);
-    };
-  });
+
+  function renderGrid(){
+    const items = menu.filter(m => m.category === soldOutActiveCat);
+    const gridEl = document.getElementById('soldOutGrid');
+    gridEl.innerHTML = items.map(m => {
+      const isActive = m.active !== false;
+      return `
+        <div class="soldout-grid-card ${isActive?'is-on':'is-off'}" data-toggle-id="${m.id}" data-active="${isActive}">
+          <span class="pemoji">${m.emoji||'🍽️'}</span>
+          <div class="pname">${m.name}</div>
+          <div class="pprice">$${m.price}</div>
+          <div class="pstatus">${isActive?'● 上架中':'✕ 已賣完'}</div>
+        </div>
+      `;
+    }).join('');
+    gridEl.querySelectorAll('[data-toggle-id]').forEach(card => {
+      card.onclick = async () => {
+        const id = card.dataset.toggleId;
+        const currentlyActive = card.dataset.active === 'true';
+        const item = menu.find(m => m.id === id);
+        const res2 = await fetch(`/api/admin/menu/${id}`, {
+          method:'PUT', headers:{'Content-Type':'application/json','x-admin-pin':soldOutPin},
+          body: JSON.stringify({ active: !currentlyActive })
+        });
+        if(res2.status === 401){
+          soldOutPin = '';
+          sessionStorage.removeItem('admin_pin');
+          renderSoldOutLogin('密碼已失效，請重新輸入');
+          return;
+        }
+        item.active = !currentlyActive;
+        showToast(currentlyActive ? `已標記「${item.name}」賣完` : `「${item.name}」已恢復上架`);
+        renderGrid();
+      };
+    });
+  }
+
+  renderTabs();
+  renderGrid();
 }
 
 loadOrders();
