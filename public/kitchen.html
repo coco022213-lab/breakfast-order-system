@@ -67,6 +67,7 @@
   }
   .tline-swap{ background:var(--yolk); color:var(--ink); }
   .tline-remove{ background:var(--chili); color:var(--white); }
+  .add-item-to-order-btn{ width:100%; margin-top:14px; font-size:14px; padding:10px; }
   .ticket-total{ border-top:2px dashed var(--paper-deep); margin-top:16px; padding-top:14px; display:flex; justify-content:space-between; align-items:center; }
   .ticket-total .label{ font-size:14px; color:var(--ink-soft); font-weight:700; }
   .ticket-total .amount{ font-size:28px; font-weight:900; color:var(--chili); }
@@ -287,6 +288,7 @@ function renderTickets(){
       <div class="perforation"></div>
       <div class="ticket-body">
         ${lines}
+        <button class="btn btn-outline add-item-to-order-btn" data-addto="${o.id}">➕ 加點</button>
         <div class="ticket-total"><span class="label">應收金額</span><span class="amount">$${o.total}</span></div>
         <div class="ticket-actions">
           ${actionsHtml}
@@ -318,6 +320,9 @@ function renderTickets(){
   });
   grid.querySelectorAll('[data-swap-order]').forEach(btn => {
     btn.onclick = () => openSwapPanel(btn.dataset.swapOrder, Number(btn.dataset.swapIdx));
+  });
+  grid.querySelectorAll('[data-addto]').forEach(btn => {
+    btn.onclick = () => openAddItemPanel(btn.dataset.addto);
   });
 }
 
@@ -412,6 +417,53 @@ async function openSwapPanel(orderId, itemIdx){
 document.getElementById('swapOverlay').addEventListener('click', e => {
   if(e.target.id === 'swapOverlay') document.getElementById('swapOverlay').classList.remove('active');
 });
+
+async function openAddItemPanel(orderId){
+  const order = orders.find(o => o.id === orderId);
+  if(!order) return;
+  document.getElementById('swapOverlay').classList.add('active');
+  const modal = document.getElementById('swapModalBody');
+  modal.innerHTML = `<div class="modal-head"><h3 style="margin:0;">幫客人加點</h3><button class="close-x" id="swapClose">✕</button></div>
+    <div class="hint" style="margin:8px 0 12px;">選一個要幫 No.${String(order.num).padStart(2,'0')}・${order.customerName} 加進去的品項（不含客製化選項，數量預設 x1）</div>
+    <input class="soldout-search" id="swapSearch" placeholder="搜尋品項名稱…">
+    <div id="swapList" style="max-height:45vh; overflow-y:auto;"><div class="empty-state">載入中…</div></div>`;
+  document.getElementById('swapClose').onclick = () => document.getElementById('swapOverlay').classList.remove('active');
+
+  const res = await fetch('/api/menu');
+  const menu = await res.json();
+  const listEl = document.getElementById('swapList');
+  const searchEl = document.getElementById('swapSearch');
+
+  function renderList(){
+    const term = searchEl.value.trim();
+    const filtered = term ? menu.filter(m => m.name.includes(term) || m.category.includes(term)) : menu;
+    if(filtered.length === 0){
+      listEl.innerHTML = '<div class="empty-state">找不到符合的品項</div>';
+      return;
+    }
+    listEl.innerHTML = filtered.map(m => `
+      <div class="soldout-row">
+        <span class="sname">${m.emoji||''} ${m.name}<span class="scat">${m.category}</span></span>
+        <span class="sprice">$${m.price}</span>
+        <button class="btn btn-primary stoggle" data-pick="${m.id}">加這個</button>
+      </div>
+    `).join('');
+    listEl.querySelectorAll('[data-pick]').forEach(btn => {
+      btn.onclick = async () => {
+        const picked = menu.find(m => m.id === btn.dataset.pick);
+        const newItem = { name: picked.name, emoji: picked.emoji, qty: 1, unitPrice: picked.price, opts: [] };
+        const newItems = [...order.items, newItem];
+        const ok = await updateOrderItems(orderId, newItems);
+        if(ok){
+          document.getElementById('swapOverlay').classList.remove('active');
+          showToast(`已幫 No.${String(order.num).padStart(2,'0')} 加點「${picked.name}」`);
+        }
+      };
+    });
+  }
+  searchEl.oninput = renderList;
+  renderList();
+}
 
 function showToast(msg){
   const t = document.getElementById('toast');
