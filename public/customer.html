@@ -629,14 +629,25 @@ async function openHistory(){
           <span class="htime">${time}</span>
           <span class="hamount">$${o.total}</span>
         </div>
+        ${o.status === 'pending' ? `<button class="btn btn-outline" style="width:100%;margin-top:8px;" data-history-edit="${o.id}">✏️ 修改這筆訂單</button>` : ''}
       </div>
     `;
   }).join('');
+  list.querySelectorAll('[data-history-edit]').forEach(btn => {
+    btn.onclick = () => {
+      const order = validOrders.find(o => o.id === btn.dataset.historyEdit);
+      if(!order) return;
+      trackedOrder = order;
+      sessionStorage.setItem('trackedOrderId', order.id);
+      document.getElementById('historyOverlay').classList.remove('active');
+      enterEditMode();
+    };
+  });
 }
 
 (async () => {
-  const isTracking = await checkTrackedOrder();
-  if(!isTracking) loadMenu();
+  await loadMenu(); // 先載入菜單，之後不管要不要修改訂單，資料都已經準備好了
+  await checkTrackedOrder();
 })();
 </script>
 </body>
