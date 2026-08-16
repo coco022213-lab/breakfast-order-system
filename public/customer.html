@@ -13,13 +13,13 @@
     display:flex; flex-direction:column; gap:10px;
   }
   .name-bar input{
-    width:100%; border:2px solid var(--paper-deep); border-radius:10px; padding:10px 12px;
-    font-size:15px; font-family:inherit;
+    width:100%; border:2px solid var(--paper-deep); border-radius:10px; padding:11px 12px;
+    font-size:16px; font-family:inherit;
   }
   .name-bar input:focus{ outline:none; border-color:var(--yolk); }
   .name-bar textarea{
-    width:100%; border:2px solid var(--paper-deep); border-radius:10px; padding:10px 12px;
-    font-size:14px; font-family:inherit; resize:none;
+    width:100%; border:2px solid var(--paper-deep); border-radius:10px; padding:11px 12px;
+    font-size:15px; font-family:inherit; resize:none;
   }
   .name-bar textarea:focus{ outline:none; border-color:var(--yolk); }
   .type-row{ display:flex; gap:8px; }
@@ -31,50 +31,50 @@
   }
   .cat-tabs .pill{ white-space:nowrap; }
 
-  .item-list{ padding:0 16px 140px; display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; }
+  .item-list{ padding:0 16px 140px; display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; }
   .item-card{
     background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow);
-    padding:10px 6px; display:flex; flex-direction:column; justify-content:center; align-items:center;
-    text-align:center; gap:5px; cursor:pointer; border:2px solid transparent; min-height:74px;
+    padding:14px 8px; display:flex; flex-direction:column; justify-content:center; align-items:center;
+    text-align:center; gap:6px; cursor:pointer; border:2px solid transparent; min-height:80px;
   }
   .item-card:active{ border-color:var(--yolk); }
   .item-card .info{ width:100%; }
-  .item-card .name{ font-weight:700; font-size:12px; line-height:1.3; }
-  .item-card .price{ color:var(--chili); font-weight:900; font-size:12px; margin-top:4px; }
+  .item-card .name{ font-weight:700; font-size:14px; line-height:1.3; }
+  .item-card .price{ color:var(--chili); font-weight:900; font-size:14px; margin-top:4px; }
 
   .cart-bar{
     position:fixed; bottom:0; left:0; right:0; background:var(--ink); color:var(--paper);
     padding:14px 16px; display:flex; align-items:center; justify-content:space-between;
     box-shadow:0 -4px 14px rgba(0,0,0,.2);
   }
-  .cart-bar .count{ font-size:13px; opacity:.8; }
-  .cart-bar .amount{ font-size:20px; font-weight:900; color:var(--yolk); }
+  .cart-bar .count{ font-size:14px; opacity:.8; }
+  .cart-bar .amount{ font-size:22px; font-weight:900; color:var(--yolk); }
   .cart-bar button{ background:var(--yolk); color:var(--ink); }
 
   .modal-head{ display:flex; justify-content:flex-end; align-items:flex-start; }
-  .modal h3{ font-size:20px; margin:4px 0 2px; font-weight:900; }
-  .modal .base-price{ color:var(--chili); font-weight:900; font-size:15px; margin-bottom:16px; }
-  .close-x{ background:var(--paper); border:none; width:30px; height:30px; border-radius:100px; font-size:16px; cursor:pointer; color:var(--ink-soft); }
+  .modal h3{ font-size:22px; margin:4px 0 2px; font-weight:900; }
+  .modal .base-price{ color:var(--chili); font-weight:900; font-size:17px; margin-bottom:16px; }
+  .close-x{ background:var(--paper); border:none; width:32px; height:32px; border-radius:100px; font-size:17px; cursor:pointer; color:var(--ink-soft); }
   .opt-group{ margin-bottom:16px; }
-  .opt-group .glabel{ font-weight:700; font-size:13px; color:var(--ink-soft); margin-bottom:8px; display:block; }
+  .opt-group .glabel{ font-weight:700; font-size:15px; color:var(--ink-soft); margin-bottom:8px; display:block; }
   .pill-row{ display:flex; flex-wrap:wrap; gap:8px; }
   .qty-row{ display:flex; align-items:center; justify-content:space-between; margin:18px 0 6px; }
-  .qty-row .glabel{ font-weight:700; font-size:13px; color:var(--ink-soft); }
+  .qty-row .glabel{ font-weight:700; font-size:15px; color:var(--ink-soft); }
   .qty-ctrl{ display:flex; align-items:center; gap:14px; }
-  .qty-ctrl button{ width:34px; height:34px; border-radius:100px; border:none; background:var(--paper-deep); font-size:18px; font-weight:900; cursor:pointer; color:var(--ink); }
-  .qty-ctrl span{ font-weight:900; font-size:16px; min-width:20px; text-align:center; }
+  .qty-ctrl button{ width:36px; height:36px; border-radius:100px; border:none; background:var(--paper-deep); font-size:19px; font-weight:900; cursor:pointer; color:var(--ink); }
+  .qty-ctrl span{ font-weight:900; font-size:18px; min-width:20px; text-align:center; }
 
   /* cart review modal */
-  .cart-line{ background:var(--paper); border-radius:10px; padding:10px 12px; margin-bottom:8px; position:relative; }
+  .cart-line{ background:var(--paper); border-radius:10px; padding:11px 12px; margin-bottom:8px; position:relative; }
   .cart-line .row1{ display:flex; justify-content:space-between; }
-  .cart-line .iname{ font-weight:700; font-size:14px; }
-  .cart-line .iprice{ font-weight:900; color:var(--chili); }
-  .cart-line .opts{ font-size:12px; color:var(--chili-deep); font-weight:700; margin-top:4px; }
-  .cart-line .remove{ position:absolute; top:6px; right:6px; background:none; border:none; color:var(--ink-soft); font-size:14px; cursor:pointer; }
-  .cart-total-row{ display:flex; justify-content:space-between; align-items:center; border-top:2px dashed var(--paper-deep); margin-top:12px; padding-top:12px; }
-  .cart-total-row .amount{ font-size:24px; font-weight:900; color:var(--chili); }
+  .cart-line .iname{ font-weight:700; font-size:15px; }
+  .cart-line .iprice{ font-weight:900; color:var(--chili); font-size:15px; }
+  .cart-line .opts{ font-size:13px; color:var(--chili-deep); font-weight:700; margin-top:4px; }
+  .cart-line .remove{ position:absolute; top:6px; right:6px; background:none; border:none; color:var(--ink-soft); font-size:15px; cursor:pointer; }
+  .cart-total-row{ display:flex; justify-content:space-between; align-items:center; border-top:2px dashed var(--paper-deep); margin-top:12px; padding-top:12px; font-size:15px; }
+  .cart-total-row .amount{ font-size:26px; font-weight:900; color:var(--chili); }
 
-  .empty-state{ text-align:center; padding:60px 20px; color:var(--ink-soft); }
+  .empty-state{ text-align:center; padding:60px 20px; color:var(--ink-soft); font-size:15px; }
 
   /* order status tracking view */
   #statusView{ display:none; min-height:100vh; align-items:center; justify-content:center; padding:20px; }
@@ -82,17 +82,17 @@
     background:var(--white); border-radius:22px; padding:36px 26px; max-width:380px; width:100%;
     text-align:center; box-shadow:var(--shadow);
   }
-  .status-icon{ font-size:56px; margin-bottom:10px; }
-  .status-title{ font-size:20px; font-weight:900; margin-bottom:6px; }
-  .status-num{ font-size:44px; font-weight:900; color:var(--chili); margin:10px 0; }
-  .status-sub{ font-size:13px; color:var(--ink-soft); margin-bottom:20px; }
+  .status-icon{ font-size:60px; margin-bottom:10px; }
+  .status-title{ font-size:22px; font-weight:900; margin-bottom:6px; }
+  .status-num{ font-size:46px; font-weight:900; color:var(--chili); margin:10px 0; }
+  .status-sub{ font-size:15px; color:var(--ink-soft); margin-bottom:20px; }
   .status-items{ background:var(--paper); border-radius:12px; padding:14px; text-align:left; margin-bottom:18px; }
-  .status-items .sline{ font-size:13px; font-weight:700; margin-bottom:6px; }
+  .status-items .sline{ font-size:15px; font-weight:700; margin-bottom:6px; }
   .status-items .sline:last-child{ margin-bottom:0; }
-  .status-items .sopts{ font-size:12px; color:var(--chili-deep); font-weight:700; margin-left:8px; }
-  .status-total{ display:flex; justify-content:space-between; border-top:2px dashed var(--paper-deep); margin-top:10px; padding-top:10px; font-weight:900; }
+  .status-items .sopts{ font-size:13px; color:var(--chili-deep); font-weight:700; margin-left:8px; }
+  .status-total{ display:flex; justify-content:space-between; border-top:2px dashed var(--paper-deep); margin-top:10px; padding-top:10px; font-weight:900; font-size:16px; }
   .status-badge{
-    display:inline-block; font-size:12px; font-weight:900; padding:5px 14px; border-radius:100px; margin-bottom:16px;
+    display:inline-block; font-size:13px; font-weight:900; padding:6px 16px; border-radius:100px; margin-bottom:16px;
   }
   .status-badge.pending{ background:rgba(240,165,0,0.18); color:#B87800; }
   .status-badge.ready{ background:rgba(79,111,63,0.2); color:var(--scallion-deep); }
@@ -101,28 +101,28 @@
   @keyframes spin{ to{ transform:rotate(360deg); } }
   .status-icon.spinning{ display:inline-block; animation:spin 2s linear infinite; }
   .status-links{ margin-top:10px; }
-  .status-links a{ color:var(--ink-soft); font-size:12px; font-weight:700; text-decoration:underline; cursor:pointer; }
+  .status-links a{ color:var(--ink-soft); font-size:13px; font-weight:700; text-decoration:underline; cursor:pointer; }
 
   .edit-banner{
     display:none; align-items:center; justify-content:space-between; gap:10px;
-    background:var(--yolk); color:var(--ink); padding:12px 16px; font-weight:700; font-size:13px;
+    background:var(--yolk); color:var(--ink); padding:12px 16px; font-weight:700; font-size:14px;
     position:sticky; top:0; z-index:11;
   }
   .edit-banner a{ color:var(--ink); text-decoration:underline; cursor:pointer; flex:none; }
 
   .history-btn{
     background:rgba(255,255,255,0.12); border:none; color:var(--paper); font-family:inherit;
-    font-size:12px; font-weight:700; padding:8px 14px; border-radius:100px; cursor:pointer;
+    font-size:13px; font-weight:700; padding:9px 15px; border-radius:100px; cursor:pointer;
   }
   .history-row{
     background:var(--paper); border-radius:10px; padding:12px 14px; margin-bottom:8px;
   }
   .history-row .hrow1{ display:flex; justify-content:space-between; align-items:center; }
-  .history-row .hnum{ font-weight:900; font-size:14px; }
-  .history-row .htime{ font-size:11px; color:var(--ink-soft); }
-  .history-row .hitems{ font-size:12px; color:var(--ink-soft); margin-top:4px; }
+  .history-row .hnum{ font-weight:900; font-size:15px; }
+  .history-row .htime{ font-size:12px; color:var(--ink-soft); }
+  .history-row .hitems{ font-size:13px; color:var(--ink-soft); margin-top:4px; }
   .history-row .hbottom{ display:flex; justify-content:space-between; align-items:center; margin-top:6px; }
-  .history-row .hamount{ font-weight:900; color:var(--chili); font-size:13px; }
+  .history-row .hamount{ font-weight:900; color:var(--chili); font-size:14px; }
 </style>
 </head>
 <body>

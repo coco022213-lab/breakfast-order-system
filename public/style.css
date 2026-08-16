@@ -28,12 +28,12 @@ button{ font-family:inherit; }
   display:flex; align-items:center; justify-content:space-between;
   padding:14px 20px; background:var(--ink); color:var(--paper); flex-wrap:wrap; gap:10px;
 }
-.topbar h1{ font-size:17px; margin:0; font-weight:900; letter-spacing:.5px; }
-.topbar .sub{ font-size:12px; opacity:.75; margin-top:2px; }
+.topbar h1{ font-size:19px; margin:0; font-weight:900; letter-spacing:.5px; }
+.topbar .sub{ font-size:13px; opacity:.75; margin-top:2px; }
 
 .pill{
   border:2px solid var(--paper-deep); background:var(--paper);
-  padding:9px 16px; border-radius:100px; font-size:13px; font-weight:700;
+  padding:10px 18px; border-radius:100px; font-size:15px; font-weight:700;
   cursor:pointer; color:var(--ink); transition:.15s;
 }
 .pill.selected{ background:var(--scallion); border-color:var(--scallion); color:var(--white); }
@@ -41,7 +41,7 @@ button{ font-family:inherit; }
 
 .btn{
   border:none; border-radius:12px; font-weight:900; cursor:pointer; transition:.15s;
-  padding:14px 18px; font-size:15px;
+  padding:14px 18px; font-size:16px;
 }
 .btn-primary{ background:var(--yolk); color:var(--ink); }
 .btn-primary:hover{ background:var(--yolk-deep); }
@@ -53,7 +53,7 @@ button{ font-family:inherit; }
 .toast{
   position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(20px);
   background:var(--ink); color:var(--paper); padding:14px 24px; border-radius:100px;
-  font-weight:700; font-size:14px; opacity:0; transition:.25s; pointer-events:none; z-index:80;
+  font-weight:700; font-size:15px; opacity:0; transition:.25s; pointer-events:none; z-index:80;
 }
 .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
 
