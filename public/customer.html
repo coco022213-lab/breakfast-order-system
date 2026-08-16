@@ -33,14 +33,19 @@
 
   .item-list{ padding:0 16px 140px; display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; }
   .item-card{
-    background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow);
-    padding:14px 8px; display:flex; flex-direction:column; justify-content:center; align-items:center;
-    text-align:center; gap:6px; cursor:pointer; border:2px solid transparent; min-height:80px;
+    background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;
+    display:flex; flex-direction:column; cursor:pointer; border:2px solid transparent; min-height:96px;
   }
   .item-card:active{ border-color:var(--yolk); }
-  .item-card .info{ width:100%; }
+  .item-card .info{
+    flex:1; display:flex; align-items:center; justify-content:center; text-align:center;
+    padding:14px 8px;
+  }
   .item-card .name{ font-weight:700; font-size:14px; line-height:1.3; }
-  .item-card .price{ color:var(--chili); font-weight:900; font-size:14px; margin-top:4px; }
+  .item-card .price{
+    background:var(--yolk); color:var(--ink); font-weight:900; font-size:14px;
+    text-align:center; padding:8px; width:100%;
+  }
 
   .cart-bar{
     position:fixed; bottom:0; left:0; right:0; background:var(--ink); color:var(--paper);
@@ -222,7 +227,7 @@ function renderItemList(){
   items.forEach(item => {
     const el = document.createElement('div');
     el.className = 'item-card';
-    el.innerHTML = `<div class="info"><div class="name">${item.name}</div><div class="price">$${item.price}</div></div>`;
+    el.innerHTML = `<div class="info"><div class="name">${item.name}</div></div><div class="price">$${item.price}</div>`;
     el.onclick = () => openModal(item);
     wrap.appendChild(el);
   });
