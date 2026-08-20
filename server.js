@@ -4,6 +4,7 @@ const { Server } = require('socket.io');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const webpush = require('web-push');
 
 const app = express();
 const server = http.createServer(app);
@@ -17,6 +18,12 @@ const DATA_FILE = path.join(__dirname, 'data-store', 'store.json');
 // 菜單「初始範本」跟著程式碼一起打包，只有在永久硬碟裡完全沒有資料時才會用它建立第一份資料。
 const SEED_FILE = path.join(__dirname, 'data', 'menu-seed.json');
 
+// 瀏覽器推播通知用的金鑰組（VAPID）。公鑰給前端訂閱用，私鑰只留在伺服器。
+// 私鑰建議之後改放到 Railway 的環境變數 VAPID_PRIVATE_KEY，這裡先給一組預設值方便直接運作。
+const VAPID_PUBLIC_KEY = 'BKVq5wIdanp72ay4aAmX-N7EIOcG15egqt7FthjS0Ijwez0-yTlt_1IvIgvhjJEZt1LdlHjXoOsnlFrCE4EHoSU';
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || '6OLa8Vs0hmI-2NFqxfE8W8Upp44MF6_tUwMSbIubdmo';
+webpush.setVapidDetails('mailto:contact@example.com', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -25,12 +32,13 @@ function loadData() {
   let data;
   if (!fs.existsSync(DATA_FILE)) {
     const seed = JSON.parse(fs.readFileSync(SEED_FILE, 'utf-8'));
-    data = { menu: seed, orders: [], orderCounter: 0, dailyTotals: {}, categoryEmojis: {} };
+    data = { menu: seed, orders: [], orderCounter: 0, dailyTotals: {}, categoryEmojis: {}, pushSubscriptions: {} };
   } else {
     data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
   }
   // 補上分類圖示對照表（舊資料或第一次啟動時，從每個分類的第一個品項帶入）
   if (!data.categoryEmojis) data.categoryEmojis = {};
+  if (!data.pushSubscriptions) data.pushSubscriptions = {};
   data.menu.forEach((m) => {
     if (!data.categoryEmojis[m.category]) data.categoryEmojis[m.category] = m.emoji || '🍽️';
   });
@@ -215,6 +223,34 @@ app.put('/api/orders/:id', (req, res) => {
   res.json(order);
 });
 
+// ---------------- 瀏覽器推播通知 ----------------
+app.get('/api/push/vapid-public-key', (req, res) => {
+  res.json({ publicKey: VAPID_PUBLIC_KEY });
+});
+
+// 客人送出訂單後，瀏覽器把訂閱資訊送來，跟這筆訂單綁在一起
+app.post('/api/push/subscribe', (req, res) => {
+  const { orderId, subscription } = req.body;
+  if (!orderId || !subscription) return res.status(400).json({ error: '缺少訂單編號或訂閱資訊' });
+  db.pushSubscriptions[orderId] = subscription;
+  saveData();
+  res.json({ ok: true });
+});
+
+// 依訂單編號發送推播通知，訂閱失效的話順便清掉
+async function sendPushForOrder(orderId, payload) {
+  const sub = db.pushSubscriptions[orderId];
+  if (!sub) return;
+  try {
+    await webpush.sendNotification(sub, JSON.stringify(payload));
+  } catch (err) {
+    if (err.statusCode === 404 || err.statusCode === 410) {
+      delete db.pushSubscriptions[orderId];
+      saveData();
+    }
+  }
+}
+
 // 通知外帶客人：餐點已經完成，可以來取餐了（還沒收款，等客人來再按「完成並收款」）
 app.post('/api/orders/:id/ready', (req, res) => {
   const order = db.orders.find((o) => o.id === req.params.id);
@@ -222,6 +258,10 @@ app.post('/api/orders/:id/ready', (req, res) => {
   order.status = 'ready';
   saveData();
   io.emit('order_ready', order);
+  sendPushForOrder(order.id, {
+    title: '🔔 荷香早餐店',
+    body: `No.${order.num} 餐點已經好了，可以來取餐囉！`,
+  });
   res.json(order);
 });
 
