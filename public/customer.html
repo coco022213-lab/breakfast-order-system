@@ -462,6 +462,47 @@ function showOrderStatus(order){
   document.getElementById('orderingView').style.display = 'none';
   document.getElementById('statusView').style.display = 'flex';
   renderStatusCard();
+  if(order.status === 'pending' || order.status === 'ready'){
+    setupPushForOrder(order.id);
+  }
+}
+
+// ---------------- 瀏覽器推播通知（餐點好了就算分頁關掉也能收到提醒） ----------------
+function urlBase64ToUint8Array(base64String){
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for(let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+async function setupPushForOrder(orderId){
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)) return; // 這個瀏覽器不支援，安靜跳過
+  try{
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    let permission = Notification.permission;
+    if(permission === 'default'){
+      permission = await Notification.requestPermission();
+    }
+    if(permission !== 'granted') return;
+
+    let sub = await reg.pushManager.getSubscription();
+    if(!sub){
+      const keyRes = await fetch('/api/push/vapid-public-key');
+      const { publicKey } = await keyRes.json();
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey)
+      });
+    }
+    await fetch('/api/push/subscribe', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ orderId, subscription: sub })
+    });
+  } catch(e){
+    console.warn('推播設定失敗（不影響其他功能）', e);
+  }
 }
 
 function renderStatusCard(){
@@ -478,6 +519,7 @@ function renderStatusCard(){
     <div class="status-title">${meta.title}</div>
     <div class="status-num">No. ${String(order.num).padStart(2,'0')}</div>
     <div class="status-sub">${order.orderType === 'takeout' ? '🥡 外帶自取' : '🍽️ 內用'}・${order.customerName}${order.customerPhone ? '・'+order.customerPhone : ''}</div>
+    ${order.status==='pending'||order.status==='ready' ? '<div class="status-sub" style="margin-top:-14px; margin-bottom:20px;">🔔 已開啟通知，離開頁面也會提醒你（iPhone 需先加到主畫面才能收到）</div>' : ''}
     <div class="status-items">
       ${itemsHtml}
       <div class="status-total"><span>總計</span><span>$${order.total}</span></div>
