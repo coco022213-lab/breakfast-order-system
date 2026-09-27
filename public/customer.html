@@ -441,6 +441,22 @@ function showToast(msg){
 // ---------------- 訂單狀態追蹤 ----------------
 const socket = io();
 let trackedOrder = null;
+// 只跟伺服器登記「我要追蹤自己這張訂單」，不會收到別人的訂單資料
+function trackOrder(id){
+  if(id) socket.emit('track', id);
+}
+socket.on('connect', () => {
+  // 斷線重連後重新登記，並補抓一次最新狀態
+  if(trackedOrder){
+    trackOrder(trackedOrder.id);
+    fetch(`/api/orders/${trackedOrder.id}`).then(r => r.ok ? r.json() : null).then(o => {
+      if(o && trackedOrder && o.id === trackedOrder.id && editingOrderId !== o.id){
+        trackedOrder = o;
+        renderStatusCard();
+      }
+    }).catch(()=>{});
+  }
+});
 let audioCtx = null;
 let editingOrderId = null;
 let editingOrderNum = null;
@@ -486,6 +502,7 @@ function statusMeta(order){
 
 function showOrderStatus(order){
   trackedOrder = order;
+  trackOrder(order.id);
   document.getElementById('orderingView').style.display = 'none';
   document.getElementById('statusView').style.display = 'flex';
   renderStatusCard();
@@ -710,6 +727,7 @@ async function openHistory(){
       const order = validOrders.find(o => o.id === btn.dataset.historyEdit);
       if(!order) return;
       trackedOrder = order;
+      trackOrder(order.id);
       sessionStorage.setItem('trackedOrderId', order.id);
       document.getElementById('historyOverlay').classList.remove('active');
       enterEditMode();

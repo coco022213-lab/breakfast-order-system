@@ -82,3 +82,10 @@ npm install
 npm start
 ```
 然後打開瀏覽器到 `http://localhost:3000/customer.html`、`http://localhost:3000/kitchen.html`、`http://localhost:3000/admin.html` 分別測試三個頁面。
+
+## 出餐看板密碼
+
+- `/kitchen.html` 第一次打開要輸入店家密碼，輸入正確後平板會記住，之後打開不用再輸入。
+- 預設跟菜單管理用同一組 `ADMIN_PIN`。如果想讓嬤嬤的看板用另一組比較簡單的密碼，可以在 Railway Variables 另外新增 `KITCHEN_PIN`（菜單管理的密碼照樣可以進看板）。
+- 看板右上角的「🔒 鎖定」會清除平板上記住的密碼。平板遺失或換人使用時請按這個鈕，並到 Railway 更換密碼。
+- 客人頁面不需要密碼，但只能看到、修改自己的訂單。

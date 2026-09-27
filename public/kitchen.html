@@ -124,6 +124,24 @@
     border:2px solid var(--paper-deep); border-radius:12px; margin:16px 0; font-family:inherit; }
   .empty-state{ text-align:center; padding:30px 10px; color:var(--ink-soft); font-size:13px; }
 
+  /* 出餐看板密碼鎖畫面 */
+  .lock-screen{
+    position:fixed; inset:0; z-index:9999; background:var(--ink);
+    display:none; align-items:center; justify-content:center; padding:16px;
+  }
+  .lock-screen.active{ display:flex; }
+  .lock-card{
+    background:var(--white); border-radius:20px; padding:32px 28px; width:100%; max-width:380px; text-align:center;
+    box-shadow:var(--shadow);
+  }
+  .lock-card .lock-icon{ font-size:48px; }
+  .lock-card h2{ font-size:26px; font-weight:900; margin:8px 0 4px; }
+  .lock-card p{ color:var(--ink-soft); font-size:16px; margin:0; }
+  .lock-card input{ width:100%; padding:16px; font-size:28px; text-align:center; letter-spacing:8px;
+    border:2px solid var(--paper-deep); border-radius:12px; margin:20px 0 14px; font-family:inherit; box-sizing:border-box; }
+  .lock-card .btn{ width:100%; font-size:20px; padding:16px; }
+  .lock-card .lock-error{ color:var(--chili); font-size:16px; font-weight:700; margin-top:12px; min-height:22px; }
+
   .picker-cat-tabs{ display:flex; gap:8px; overflow-x:auto; padding-bottom:10px; margin-bottom:14px; border-bottom:2px dashed var(--paper-deep); }
   .picker-tab{
     flex:none; border:2px solid var(--paper-deep); background:var(--white); color:var(--ink); font-family:inherit;
@@ -175,6 +193,7 @@
     <span class="sound-hint off" id="soundHint"><span class="dot"></span>提示音準備中</span>
     <button class="soldout-btn" id="soldOutBtn">🚫 標記賣完</button>
     <button class="end-day-btn" id="endDayBtn">🔚 結束今日營業</button>
+    <button class="end-day-btn" id="lockBtn" title="鎖定出餐看板，下次打開要重新輸入密碼">🔒 鎖定</button>
     <a href="/qrcode.html" style="color:var(--paper); text-decoration:none; font-size:13px; background:rgba(255,255,255,0.12); padding:8px 14px; border-radius:100px;">📱 QR Code</a>
     <a href="/dashboard.html" style="color:var(--paper); text-decoration:none; font-size:13px; background:rgba(255,255,255,0.12); padding:8px 14px; border-radius:100px;">📊 營業儀表板</a>
     <a href="/admin.html" style="color:var(--paper); text-decoration:none; font-size:13px; background:rgba(255,255,255,0.12); padding:8px 14px; border-radius:100px;">🍳 菜單管理</a>
@@ -197,14 +216,98 @@
 <div class="overlay" id="soldOutOverlay"><div class="modal" id="soldOutModalBody"></div></div>
 <div class="overlay" id="swapOverlay"><div class="modal" id="swapModalBody"></div></div>
 <div class="toast" id="toast"></div>
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-card">
+    <div class="lock-icon">👵</div>
+    <h2>出餐看板</h2>
+    <p>請輸入店家密碼</p>
+    <input id="lockPinInput" type="password" inputmode="numeric" maxlength="12" placeholder="****" autocomplete="off">
+    <button class="btn btn-primary" id="lockLoginBtn">進入看板</button>
+    <div class="lock-error" id="lockError"></div>
+  </div>
+</div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
+// ---------------- 店家密碼 ----------------
+// 輸入正確後記在這台平板上，之後每天打開都不用再輸入；按「🔒 鎖定」或密碼更換後才要重新輸入。
+const PIN_KEY = 'kitchen_pin';
+function readPin(){ try{ return localStorage.getItem(PIN_KEY) || ''; }catch(e){ return ''; } }
+function savePin(p){ try{ localStorage.setItem(PIN_KEY, p); }catch(e){} }
+function clearPin(){ try{ localStorage.removeItem(PIN_KEY); }catch(e){} }
+let staffPin = readPin();
+
+// 客人輸入的文字（姓名、備註…）顯示前先轉成純文字，避免有人塞入惡意程式碼
+function esc(v){
+  return String(v == null ? '' : v)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// 所有店家專用的操作都帶上密碼；密碼失效就回到鎖定畫面
+async function staffFetch(url, opts = {}){
+  const headers = { ...(opts.headers || {}), 'x-staff-pin': staffPin };
+  const res = await fetch(url, { ...opts, headers });
+  if(res.status === 401) lockBoard('密碼已失效，請重新輸入');
+  return res;
+}
+
 let orders = [];
 let recentlyCompleted = []; // 最近完成的訂單，供「復原」使用
 const RECENT_LIMIT = 8;
-const socket = io();
+// 連線時帶上密碼，伺服器確認後才會把訂單推送到這台平板
+const socket = io({ autoConnect: false, auth: (cb) => cb({ role: 'staff', pin: staffPin }) });
 let hasConnectedBefore = false;
+
+socket.on('connect_error', (err) => {
+  if(err && err.message === 'unauthorized') lockBoard('密碼錯誤，請重新輸入');
+});
+
+function showLockScreen(msg){
+  document.getElementById('lockScreen').classList.add('active');
+  document.getElementById('lockError').textContent = msg || '';
+  const input = document.getElementById('lockPinInput');
+  input.value = '';
+  setTimeout(() => input.focus(), 50);
+}
+function lockBoard(msg){
+  staffPin = '';
+  clearPin();
+  socket.disconnect();
+  hasConnectedBefore = false;
+  orders = [];
+  recentlyCompleted = [];
+  renderTickets();
+  renderRecent();
+  document.getElementById('todayTotal').textContent = '$0';
+  showLockScreen(msg);
+}
+async function tryUnlock(pin){
+  if(!pin){ showLockScreen('請輸入密碼'); return false; }
+  let res;
+  try{
+    res = await fetch('/api/staff/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ pin }) });
+  }catch(e){
+    showLockScreen('連不上伺服器，請確認網路後再試一次');
+    return false;
+  }
+  if(!res.ok){ staffPin = ''; clearPin(); showLockScreen('密碼錯誤，請再試一次'); return false; }
+  staffPin = pin;
+  savePin(pin);
+  document.getElementById('lockScreen').classList.remove('active');
+  socket.connect();
+  loadOrders();
+  loadSummary();
+  return true;
+}
+document.getElementById('lockLoginBtn').onclick = () => tryUnlock(document.getElementById('lockPinInput').value.trim());
+document.getElementById('lockPinInput').addEventListener('keydown', e => {
+  if(e.key === 'Enter') tryUnlock(e.target.value.trim());
+});
+document.getElementById('lockBtn').onclick = () => {
+  if(!confirm('確定要鎖定出餐看板嗎？\n鎖定後要重新輸入密碼才能看到訂單。')) return;
+  lockBoard('');
+};
 
 socket.on('connect', () => {
   const hint = document.getElementById('connHint');
@@ -280,12 +383,14 @@ function playChime(){
 
 // ---------------- 訂單資料 ----------------
 async function loadOrders(){
-  const res = await fetch('/api/orders');
+  const res = await staffFetch('/api/orders');
+  if(!res.ok) return;
   orders = (await res.json()).filter(o => o.status === 'pending' || o.status === 'ready');
   renderTickets();
 }
 async function loadSummary(){
-  const res = await fetch('/api/orders/summary');
+  const res = await staffFetch('/api/orders/summary');
+  if(!res.ok) return;
   const data = await res.json();
   document.getElementById('todayTotal').textContent = '$' + data.total;
 }
@@ -304,13 +409,13 @@ function renderTickets(){
     const lines = o.items.map((it, idx) => `
       <div class="tline">
         <span class="iprice">$${it.unitPrice}</span>
-        <span class="iname">${it.emoji||''} ${it.name}</span>
+        <span class="iname">${esc(it.emoji)} ${esc(it.name)}</span>
         <span class="iqty"> x${it.qty}</span>
         <div class="tline-actions">
           <button class="tline-edit" data-edit-order="${o.id}" data-edit-idx="${idx}" title="編輯這個品項">✏️ 編輯</button>
         </div>
-        ${it.opts && it.opts.length ? `<div class="opts">${it.opts.join('・')}</div>` : ''}
-        ${it.note ? `<div class="note-line" style="margin:6px 0 0;">📝 ${it.note}</div>` : ''}
+        ${it.opts && it.opts.length ? `<div class="opts">${it.opts.map(esc).join('・')}</div>` : ''}
+        ${it.note ? `<div class="note-line" style="margin:6px 0 0;">📝 ${esc(it.note)}</div>` : ''}
       </div>`).join('');
     const created = new Date(o.createdAt);
     const time = created.toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'});
@@ -332,10 +437,10 @@ function renderTickets(){
       <div class="ticket-top">
         <div>
           <div class="num">No.${String(o.num).padStart(2,'0')}</div>
-          <div class="cust">${o.customerName}</div>
+          <div class="cust">${esc(o.customerName)}</div>
           <span class="type-badge ${o.orderType==='takeout'?'takeout':'dine-in'}">${o.orderType==='takeout'?'🥡 外帶':'🍽️ 內用'}</span>
           ${isReady ? '<span class="ready-badge">🔔 已通知取餐</span>' : ''}
-          ${o.customerPhone ? `<div><a class="phone-link" href="tel:${o.customerPhone}">📞 ${o.customerPhone}</a></div>` : ''}
+          ${o.customerPhone ? `<div><a class="phone-link" href="tel:${esc(o.customerPhone)}">📞 ${esc(o.customerPhone)}</a></div>` : ''}
         </div>
         <div style="text-align:right;">
           <span class="time">${time}</span>
@@ -358,18 +463,18 @@ function renderTickets(){
   grid.querySelectorAll('.done-btn').forEach(btn => {
     btn.onclick = async () => {
       const id = btn.dataset.id;
-      await fetch(`/api/orders/${id}/paid`, { method:'POST' });
+      await staffFetch(`/api/orders/${id}/paid`, { method:'POST' });
     };
   });
   grid.querySelectorAll('[data-ready]').forEach(btn => {
     btn.onclick = async () => {
-      await fetch(`/api/orders/${btn.dataset.ready}/ready`, { method:'POST' });
+      await staffFetch(`/api/orders/${btn.dataset.ready}/ready`, { method:'POST' });
     };
   });
   grid.querySelectorAll('[data-cancel]').forEach(btn => {
     btn.onclick = async () => {
       if(!confirm('確定要取消這張訂單嗎？')) return;
-      await fetch(`/api/orders/${btn.dataset.cancel}/cancel`, { method:'POST' });
+      await staffFetch(`/api/orders/${btn.dataset.cancel}/cancel`, { method:'POST' });
     };
   });
   grid.querySelectorAll('[data-edit-order]').forEach(btn => {
@@ -384,7 +489,7 @@ function renderTickets(){
 async function updateOrderItems(orderId, newItems){
   const order = orders.find(o => o.id === orderId);
   if(!order) return;
-  const res = await fetch(`/api/orders/${orderId}`, {
+  const res = await staffFetch(`/api/orders/${orderId}`, {
     method:'PUT', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
       items: newItems,
@@ -429,7 +534,7 @@ async function openEditItemPanel(orderId, itemIdx){
 
   openItemPicker({
     title: '編輯這個品項',
-    sub: `目前是「${oldItem.name}」x${oldItem.qty}`,
+    sub: `目前是「${esc(oldItem.name)}」x${oldItem.qty}`,
     cancelLabel: '❌ 客人不要這項了，直接取消',
     onCancel: cancelHandler,
     dividerText: '或是換成其他品項',
@@ -453,7 +558,7 @@ async function openAddItemPanel(orderId){
   if(!order) return;
   openItemPicker({
     title: '幫客人加點',
-    sub: `選一個要幫 No.${String(order.num).padStart(2,'0')}・${order.customerName} 加進去的品項（不含客製化選項，數量預設 x1）`,
+    sub: `選一個要幫 No.${String(order.num).padStart(2,'0')}・${esc(order.customerName)} 加進去的品項（不含客製化選項，數量預設 x1）`,
     onPick: async (picked) => {
       const newItem = { name: picked.name, emoji: picked.emoji, qty: 1, unitPrice: picked.price, opts: [] };
       const newItems = [...order.items, newItem];
@@ -539,13 +644,13 @@ function renderRecent(){
   box.style.display = 'block';
   list.innerHTML = recentlyCompleted.map(o => `
     <div class="recent-item">
-      <span class="rtext"><span class="rnum">No.${String(o.num).padStart(2,'0')}</span> ${o.customerName}・$${o.total}</span>
+      <span class="rtext"><span class="rnum">No.${String(o.num).padStart(2,'0')}</span> ${esc(o.customerName)}・$${o.total}</span>
       <button class="btn btn-outline" data-undo="${o.id}">復原</button>
     </div>
   `).join('');
   list.querySelectorAll('[data-undo]').forEach(btn => {
     btn.onclick = async () => {
-      await fetch(`/api/orders/${btn.dataset.undo}/undo`, { method:'POST' });
+      await staffFetch(`/api/orders/${btn.dataset.undo}/undo`, { method:'POST' });
     };
   });
 }
@@ -601,62 +706,31 @@ document.getElementById('endDayBtn').onclick = async () => {
     msg = `⚠️ 目前還有 ${orders.length} 筆訂單尚未完成！\n\n` + msg;
   }
   if(!confirm(msg)) return;
-  const res = await fetch('/api/admin/reset-counter', { method:'POST' });
+  const res = await staffFetch('/api/admin/reset-counter', { method:'POST' });
+  if(!res.ok) return;
   const data = await res.json();
   showToast(data.restoredCount > 0
     ? `已重設叫號，並恢復 ${data.restoredCount} 項賣完的品項上架`
     : '已重設，明天從 No.01 開始');
 };
 
-// ---------------- 標記賣完 ----------------
-let soldOutPin = sessionStorage.getItem('admin_pin') || '';
+// ---------------- 標記賣完（用出餐看板的密碼，不用再另外登入） ----------------
 let soldOutActiveCat = '';
 
 document.getElementById('soldOutBtn').onclick = openSoldOutPanel;
 
 function openSoldOutPanel(){
   document.getElementById('soldOutOverlay').classList.add('active');
-  if(soldOutPin){
-    renderSoldOutGrid();
-  } else {
-    renderSoldOutLogin();
-  }
+  renderSoldOutGrid();
 }
 document.getElementById('soldOutOverlay').addEventListener('click', e => {
   if(e.target.id === 'soldOutOverlay') document.getElementById('soldOutOverlay').classList.remove('active');
 });
 
-function renderSoldOutLogin(errorMsg){
-  const modal = document.getElementById('soldOutModalBody');
-  modal.innerHTML = `
-    <div class="modal-head"><h3 style="margin:0;">🚫 標記賣完</h3><button class="close-x" id="soldOutClose">✕</button></div>
-    <div class="soldout-login">
-      <p style="color:var(--ink-soft); font-size:13px; margin-top:14px;">請輸入管理密碼（跟菜單管理同一組）</p>
-      <input id="soldOutPinInput" type="password" inputmode="numeric" maxlength="6" placeholder="****">
-      <button class="btn btn-primary" style="width:100%;" id="soldOutLoginBtn">確認</button>
-      ${errorMsg ? `<p style="color:var(--chili); font-size:13px; margin-top:10px;">${errorMsg}</p>` : ''}
-    </div>
-  `;
-  document.getElementById('soldOutClose').onclick = () => document.getElementById('soldOutOverlay').classList.remove('active');
-  const doLogin = async () => {
-    const pin = document.getElementById('soldOutPinInput').value.trim();
-    const res = await fetch('/api/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pin}) });
-    if(res.ok){
-      soldOutPin = pin;
-      sessionStorage.setItem('admin_pin', pin);
-      renderSoldOutGrid();
-    } else {
-      renderSoldOutLogin('密碼錯誤，請再試一次');
-    }
-  };
-  document.getElementById('soldOutLoginBtn').onclick = doLogin;
-  document.getElementById('soldOutPinInput').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
-}
-
 async function renderSoldOutGrid(){
   const modal = document.getElementById('soldOutModalBody');
   const res = await fetch('/api/menu?all=1');
-  if(!res.ok){ renderSoldOutLogin(); return; }
+  if(!res.ok){ showToast('讀取菜單失敗，請再試一次'); return; }
   const menu = await res.json();
   const categories = [...new Set(menu.map(m => m.category))];
   if(!soldOutActiveCat || !categories.includes(soldOutActiveCat)) soldOutActiveCat = categories[0] || '';
@@ -697,14 +771,13 @@ async function renderSoldOutGrid(){
         const id = card.dataset.toggleId;
         const currentlyActive = card.dataset.active === 'true';
         const item = menu.find(m => m.id === id);
-        const res2 = await fetch(`/api/admin/menu/${id}`, {
-          method:'PUT', headers:{'Content-Type':'application/json','x-admin-pin':soldOutPin},
+        const res2 = await staffFetch(`/api/staff/menu/${id}/active`, {
+          method:'PUT', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ active: !currentlyActive })
         });
-        if(res2.status === 401){
-          soldOutPin = '';
-          sessionStorage.removeItem('admin_pin');
-          renderSoldOutLogin('密碼已失效，請重新輸入');
+        if(!res2.ok){
+          document.getElementById('soldOutOverlay').classList.remove('active');
+          if(res2.status !== 401) showToast('更新失敗，請再試一次');
           return;
         }
         item.active = !currentlyActive;
@@ -718,8 +791,13 @@ async function renderSoldOutGrid(){
   renderGrid();
 }
 
-loadOrders();
-loadSummary();
+// 開啟看板：平板上已經記住密碼就直接進入，沒有的話顯示輸入畫面
+renderTickets();
+if(staffPin){
+  tryUnlock(staffPin);
+} else {
+  showLockScreen('');
+}
 </script>
 </body>
 </html>

@@ -12,6 +12,8 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 const ADMIN_PIN = process.env.ADMIN_PIN || '0000';
+// 出餐看板用的密碼。Railway 沒有另外設定 KITCHEN_PIN 的話，就跟菜單管理用同一組 ADMIN_PIN。
+const KITCHEN_PIN = process.env.KITCHEN_PIN || ADMIN_PIN;
 // 訂單/菜單「目前資料」放在獨立的資料夾，這個資料夾會掛載 Railway 的永久硬碟（Volume），
 // 這樣不管程式怎麼重新部署，資料都不會被清空。
 const DATA_FILE = path.join(__dirname, 'data-store', 'store.json');
@@ -75,6 +77,49 @@ app.post('/api/admin/login', (req, res) => {
   res.status(401).json({ error: '密碼錯誤' });
 });
 
+// ---------------- 出餐看板（店家）驗證 ----------------
+// 出餐看板密碼或管理密碼都可以通過
+function isStaffPin(pin) {
+  return typeof pin === 'string' && pin !== '' && (pin === KITCHEN_PIN || pin === ADMIN_PIN);
+}
+function requireStaff(req, res, next) {
+  if (!isStaffPin(req.headers['x-staff-pin'])) {
+    return res.status(401).json({ error: '請先輸入出餐看板密碼' });
+  }
+  next();
+}
+app.post('/api/staff/login', (req, res) => {
+  if (isStaffPin(req.body.pin)) return res.json({ ok: true });
+  res.status(401).json({ error: '密碼錯誤' });
+});
+
+// ---------------- 即時連線（Socket.io）分流 ----------------
+// 出餐看板帶著密碼連線 → 加入 staff 房間，收得到所有訂單。
+// 客人手機不帶密碼 → 只能加入「自己那張訂單」的房間，只收得到自己訂單的狀態。
+io.use((socket, next) => {
+  const auth = socket.handshake.auth || {};
+  if (auth.role === 'staff') {
+    if (!isStaffPin(auth.pin)) return next(new Error('unauthorized'));
+    socket.data.isStaff = true;
+  }
+  next();
+});
+io.on('connection', (socket) => {
+  if (socket.data.isStaff) socket.join('staff');
+  // 客人追蹤自己的訂單（訂單編號是隨機長字串，只有下單的人知道）
+  socket.on('track', (orderId) => {
+    if (typeof orderId !== 'string') return;
+    if (!db.orders.some((o) => o.id === orderId)) return;
+    socket.join('order:' + orderId);
+  });
+});
+
+// 訂單有變動時：完整資料給出餐看板，客人只收到自己那張單（不含營業額）
+function notifyOrder(event, order, staffPayload, customerPayload) {
+  io.to('staff').emit(event, staffPayload || order);
+  io.to('order:' + order.id).emit(event, customerPayload || order);
+}
+
 // ---------------- menu ----------------
 app.get('/api/menu', (req, res) => {
   const includeInactive = req.query.all === '1';
@@ -104,6 +149,15 @@ app.put('/api/admin/menu/:id', requireAdmin, (req, res) => {
   res.json(db.menu[idx]);
 });
 
+// 出餐看板的「標記賣完」：只能切換上架/賣完，不能改其他菜單內容
+app.put('/api/staff/menu/:id/active', requireStaff, (req, res) => {
+  const item = db.menu.find((m) => m.id === req.params.id);
+  if (!item) return res.status(404).json({ error: '找不到品項' });
+  item.active = req.body.active !== false;
+  saveData();
+  res.json(item);
+});
+
 app.delete('/api/admin/menu/:id', requireAdmin, (req, res) => {
   db.menu = db.menu.filter((m) => m.id !== req.params.id);
   saveData();
@@ -127,11 +181,11 @@ app.put('/api/admin/category-emoji', requireAdmin, (req, res) => {
 });
 
 // ---------------- orders ----------------
-app.get('/api/orders', (req, res) => {
+app.get('/api/orders', requireStaff, (req, res) => {
   res.json(db.orders.filter((o) => o.status !== 'paid'));
 });
 
-app.get('/api/orders/summary', (req, res) => {
+app.get('/api/orders/summary', requireStaff, (req, res) => {
   const key = todayKey();
   res.json({
     date: key,
@@ -198,16 +252,22 @@ app.post('/api/orders', (req, res) => {
   };
   db.orders.push(order);
   saveData();
-  io.emit('new_order', order);
+  io.to('staff').emit('new_order', order);
   res.json(order);
 });
 
-// 客人在訂單還沒開始製作前，可以自己加點/修改內容（不需要密碼，只有自己知道訂單編號）
+// 修改訂單內容：
+// - 出餐看板（帶密碼）可以改任何還沒完成的訂單
+// - 客人（不需要密碼，只有自己知道訂單編號）只能在餐點還沒做好之前修改
 app.put('/api/orders/:id', (req, res) => {
   const order = db.orders.find((o) => o.id === req.params.id);
   if (!order) return res.status(404).json({ error: '找不到訂單' });
   if (order.status === 'paid' || order.status === 'cancelled') {
     return res.status(409).json({ error: '這筆訂單已經完成或取消了，沒辦法再修改' });
+  }
+  const isStaff = isStaffPin(req.headers['x-staff-pin']);
+  if (!isStaff && order.status !== 'pending') {
+    return res.status(409).json({ error: '餐點已經做好了，要修改請直接到櫃檯告訴老闆娘' });
   }
   const { items, customerName, customerPhone, orderType } = req.body;
   if (!items || !items.length) {
@@ -219,7 +279,7 @@ app.put('/api/orders/:id', (req, res) => {
   order.customerPhone = (customerPhone || '').trim();
   order.orderType = orderType === 'takeout' ? 'takeout' : 'dine-in';
   saveData();
-  io.emit('order_updated', order);
+  notifyOrder('order_updated', order);
   res.json(order);
 });
 
@@ -232,6 +292,7 @@ app.get('/api/push/vapid-public-key', (req, res) => {
 app.post('/api/push/subscribe', (req, res) => {
   const { orderId, subscription } = req.body;
   if (!orderId || !subscription) return res.status(400).json({ error: '缺少訂單編號或訂閱資訊' });
+  if (!db.orders.some((o) => o.id === orderId)) return res.status(404).json({ error: '找不到訂單' });
   db.pushSubscriptions[orderId] = subscription;
   saveData();
   res.json({ ok: true });
@@ -252,12 +313,12 @@ async function sendPushForOrder(orderId, payload) {
 }
 
 // 通知外帶客人：餐點已經完成，可以來取餐了（還沒收款，等客人來再按「完成並收款」）
-app.post('/api/orders/:id/ready', (req, res) => {
+app.post('/api/orders/:id/ready', requireStaff, (req, res) => {
   const order = db.orders.find((o) => o.id === req.params.id);
   if (!order) return res.status(404).json({ error: '找不到訂單' });
   order.status = 'ready';
   saveData();
-  io.emit('order_ready', order);
+  notifyOrder('order_ready', order);
   sendPushForOrder(order.id, {
     title: '🔔 荷香早餐店',
     body: `No.${order.num} 餐點已經好了，可以來取餐囉！`,
@@ -266,7 +327,7 @@ app.post('/api/orders/:id/ready', (req, res) => {
 });
 
 // 完成並收款:一個動作同時代表出餐完成 + 現金入帳
-app.post('/api/orders/:id/paid', (req, res) => {
+app.post('/api/orders/:id/paid', requireStaff, (req, res) => {
   const order = db.orders.find((o) => o.id === req.params.id);
   if (!order) return res.status(404).json({ error: '找不到訂單' });
   const key = todayKey();
@@ -275,12 +336,12 @@ app.post('/api/orders/:id/paid', (req, res) => {
   db.dailyTotals[key] = (db.dailyTotals[key] || 0) + order.total;
   saveData();
   const summary = { date: key, total: db.dailyTotals[key] };
-  io.emit('order_paid', { order, summary });
+  notifyOrder('order_paid', order, { order, summary }, { order });
   res.json({ order, summary });
 });
 
 // 復原:按錯「完成並收款」時，把訂單救回未完成狀態，並把金額從當日營業額扣掉
-app.post('/api/orders/:id/undo', (req, res) => {
+app.post('/api/orders/:id/undo', requireStaff, (req, res) => {
   const order = db.orders.find((o) => o.id === req.params.id);
   if (!order) return res.status(404).json({ error: '找不到訂單' });
   if (order.status !== 'paid') return res.status(400).json({ error: '這筆訂單目前不是已完成狀態' });
@@ -290,17 +351,17 @@ app.post('/api/orders/:id/undo', (req, res) => {
   delete order.paidDate;
   saveData();
   const summary = { date: key, total: db.dailyTotals[key] };
-  io.emit('order_undone', { order, summary });
+  notifyOrder('order_undone', order, { order, summary }, { order });
   res.json({ order, summary });
 });
 
 // 訂單有誤,取消(不計入營業額)
-app.post('/api/orders/:id/cancel', (req, res) => {
+app.post('/api/orders/:id/cancel', requireStaff, (req, res) => {
   const order = db.orders.find((o) => o.id === req.params.id);
   if (!order) return res.status(404).json({ error: '找不到訂單' });
   order.status = 'cancelled';
   saveData();
-  io.emit('order_cancelled', order);
+  notifyOrder('order_cancelled', order);
   res.json(order);
 });
 
@@ -318,7 +379,7 @@ app.delete('/api/admin/orders/:id', requireAdmin, (req, res) => {
 
 // 結束今日營業：把叫號重設回 0，明天第一筆訂單會是 No.01；同時把今天標記賣完的品項全部恢復上架
 // （不影響任何歷史訂單資料或營業額統計）
-app.post('/api/admin/reset-counter', (req, res) => {
+app.post('/api/admin/reset-counter', requireStaff, (req, res) => {
   db.orderCounter = 0;
   let restoredCount = 0;
   db.menu.forEach((m) => {
