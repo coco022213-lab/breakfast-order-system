@@ -73,7 +73,12 @@
   .cart-line .iname{ font-weight:700; font-size:15px; }
   .cart-line .iprice{ font-weight:900; color:var(--chili); font-size:15px; }
   .cart-line .opts{ font-size:13px; color:var(--chili-deep); font-weight:700; margin-top:4px; }
-  .cart-line .remove{ position:absolute; top:6px; right:6px; background:none; border:none; color:var(--ink-soft); font-size:15px; cursor:pointer; }
+  .cart-line .row2{ display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
+  .cart-line .qty-ctrl{ display:flex; align-items:center; background:var(--white); border:2px solid var(--paper-deep); border-radius:100px; overflow:hidden; gap:0; }
+  .cart-line .qty-ctrl button{ width:34px; height:34px; border:none; background:transparent; font-size:17px; font-weight:900; color:var(--ink); cursor:pointer; border-radius:0; padding:0; }
+  .cart-line .qty-ctrl button:active{ background:var(--paper-deep); }
+  .cart-line .qty-ctrl .qty-num{ min-width:28px; text-align:center; font-size:15px; font-weight:900; }
+  .cart-line .remove-link{ border:none; background:none; color:var(--chili); font-weight:700; font-size:13px; text-decoration:underline; cursor:pointer; font-family:inherit; padding:0; }
   .cart-total-row{ display:flex; justify-content:space-between; align-items:center; border-top:2px dashed var(--paper-deep); margin-top:12px; padding-top:12px; font-size:15px; }
   .cart-total-row .amount{ font-size:26px; font-weight:900; color:var(--chili); }
 
@@ -326,10 +331,17 @@ function renderCartModal(){
   const total = cart.reduce((s,c)=>s+c.unitPrice*c.qty,0);
   let linesHtml = cart.length===0 ? '<div class="empty-state">尚未選購任何餐點</div>' : cart.map((c,idx)=>`
     <div class="cart-line">
-      <button class="remove" data-idx="${idx}">✕</button>
-      <div class="row1"><span class="iname">${c.name} x${c.qty}</span><span class="iprice">$${c.unitPrice*c.qty}</span></div>
+      <div class="row1"><span class="iname">${c.name}</span><span class="iprice">$${c.unitPrice*c.qty}</span></div>
       ${c.opts.length?`<div class="opts">${c.opts.join('・')}</div>`:''}
       ${c.note?`<div class="opts" style="color:var(--ink-soft);">📝 ${c.note}</div>`:''}
+      <div class="row2">
+        <div class="qty-ctrl">
+          <button class="qty-minus" data-idx="${idx}">－</button>
+          <span class="qty-num">${c.qty}</span>
+          <button class="qty-plus" data-idx="${idx}">＋</button>
+        </div>
+        <button class="remove-link" data-idx="${idx}">移除這項</button>
+      </div>
     </div>`).join('');
   const isEditing = !!editingOrderId;
   document.getElementById('cartModalBody').innerHTML = `
@@ -342,8 +354,23 @@ function renderCartModal(){
   `;
   document.getElementById('cartOverlay').classList.add('active');
   document.getElementById('cartClose').onclick = () => document.getElementById('cartOverlay').classList.remove('active');
-  document.querySelectorAll('#cartModalBody .remove').forEach(btn=>{
+  document.querySelectorAll('#cartModalBody .remove-link').forEach(btn=>{
     btn.onclick = () => { cart.splice(+btn.dataset.idx,1); updateCartBar(); renderCartModal(); };
+  });
+  document.querySelectorAll('#cartModalBody .qty-minus').forEach(btn=>{
+    btn.onclick = () => {
+      const idx = +btn.dataset.idx;
+      cart[idx].qty--;
+      if(cart[idx].qty <= 0) cart.splice(idx,1);
+      updateCartBar(); renderCartModal();
+    };
+  });
+  document.querySelectorAll('#cartModalBody .qty-plus').forEach(btn=>{
+    btn.onclick = () => {
+      const idx = +btn.dataset.idx;
+      cart[idx].qty++;
+      updateCartBar(); renderCartModal();
+    };
   });
   const submitBtn = document.getElementById('submitOrderBtn');
   if(submitBtn) submitBtn.onclick = submitOrder;
